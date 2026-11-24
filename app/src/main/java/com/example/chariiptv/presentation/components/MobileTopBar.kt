@@ -41,8 +41,8 @@ private data class NavCategory(
 
 private val NAV_CATEGORIES = listOf(
     NavCategory("important", "Importante", "🌟", isSpecial = true),
-    NavCategory("countries", "Países", "🌎"),
     NavCategory("fav", "Favoritos", "⭐"),
+    NavCategory("countries", "Países", "🌎"),
     NavCategory("sports", "Deportes", "⚽"),
     NavCategory("news", "Noticias", "📰"),
     NavCategory("movies", "Películas", "🎬"),
