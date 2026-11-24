@@ -33,6 +33,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.chariiptv.domain.Channel
 import com.example.chariiptv.player.ExoPlayerView
 import com.example.chariiptv.presentation.TvViewModel
+import com.example.chariiptv.presentation.components.ImportantModalDialog
 import com.example.chariiptv.presentation.components.MobileChannelCard
 import com.example.chariiptv.presentation.components.MobileGhibliCard
 import com.example.chariiptv.presentation.components.MobileTopBar
@@ -69,6 +70,7 @@ class MainActivity : FragmentActivity() {
                 isPlayingChannel = (uiState.currentChannel != null)
 
                 var notificationMessage by remember { mutableStateOf<String?>(null) }
+                var showImportantDialog by remember { mutableStateOf(false) }
 
                 LaunchedEffect(notificationMessage) {
                     if (notificationMessage != null) {
@@ -87,6 +89,7 @@ class MainActivity : FragmentActivity() {
                                 onFilterSelected = { viewModel.selectFilter(it) },
                                 selectedCountryCode = uiState.selectedCountryCode,
                                 onCountrySelected = { viewModel.selectCountry(it) },
+                                onImportantClick = { showImportantDialog = true },
                                 rssNews = uiState.rssNews
                             )
                         }
@@ -263,6 +266,11 @@ class MainActivity : FragmentActivity() {
                                 },
                                 onClose = { viewModel.playChannel(null) }
                             )
+                        }
+
+                        // Diálogo modal "Importante" (Donaciones PayPal, Yape y Web Oficial)
+                        if (showImportantDialog) {
+                            ImportantModalDialog(onDismiss = { showImportantDialog = false })
                         }
 
                         // Diálogo de error global

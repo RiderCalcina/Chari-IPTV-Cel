@@ -33,6 +33,7 @@ import com.google.android.gms.cast.framework.CastButtonFactory
 private data class NavCategory(val id: String, val name: String, val icon: String)
 
 private val NAV_CATEGORIES = listOf(
+    NavCategory("important", "Importante", "ℹ️"),
     NavCategory("fav", "Favoritos", "⭐"),
     NavCategory("sports", "Deportes", "⚽"),
     NavCategory("news", "Noticias", "📰"),
@@ -53,6 +54,7 @@ fun MobileTopBar(
     onFilterSelected: (String) -> Unit,
     selectedCountryCode: String,
     onCountrySelected: (String) -> Unit,
+    onImportantClick: () -> Unit = {},
     rssNews: String,
     modifier: Modifier = Modifier
 ) {
@@ -160,10 +162,8 @@ fun MobileTopBar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "🔴 NOTICIAS: ",
-                    color = Color(0xFFEF4444),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "🔴 ",
+                    fontSize = 12.sp
                 )
                 Text(
                     text = rssNews,
@@ -199,7 +199,13 @@ fun MobileTopBar(
                 val isSelected = cat.id == selectedFilterId
                 Tab(
                     selected = isSelected,
-                    onClick = { onFilterSelected(cat.id) },
+                    onClick = {
+                        if (cat.id == "important") {
+                            onImportantClick()
+                        } else {
+                            onFilterSelected(cat.id)
+                        }
+                    },
                     text = {
                         Text(
                             text = "${cat.icon} ${cat.name}",
