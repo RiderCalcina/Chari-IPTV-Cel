@@ -43,6 +43,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.mediarouter.app.MediaRouteButton
+import com.google.android.gms.cast.framework.CastButtonFactory
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -459,6 +461,18 @@ fun ExoPlayerView(
                     }) {
                         Icon(Icons.Filled.PictureInPictureAlt, contentDescription = "PiP", tint = Color.White)
                     }
+
+                    // Botón de Google Cast
+                    AndroidView(
+                        modifier = Modifier.size(40.dp),
+                        factory = { ctx ->
+                            MediaRouteButton(ctx).apply {
+                                try {
+                                    CastButtonFactory.setUpMediaRouteButton(ctx, this)
+                                } catch (_: Exception) {}
+                            }
+                        }
+                    )
 
                     // Botón de Favoritos (Estrella dorada)
                     IconButton(onClick = onToggleFavorite) {

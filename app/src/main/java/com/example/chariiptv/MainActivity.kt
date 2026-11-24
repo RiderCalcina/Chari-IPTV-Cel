@@ -18,10 +18,16 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CastConnected
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -29,9 +35,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.mediarouter.app.MediaRouteButton
+import coil.compose.AsyncImage
 import com.example.chariiptv.domain.Channel
+import com.example.chariiptv.domain.GhibliPlaybackStore
 import com.example.chariiptv.player.ExoPlayerView
 import com.example.chariiptv.presentation.TvViewModel
 import com.example.chariiptv.presentation.components.ImportantModalDialog
@@ -43,7 +53,11 @@ import com.example.chariiptv.util.Constants
 import com.google.android.gms.cast.MediaInfo
 import com.google.android.gms.cast.MediaLoadRequestData
 import com.google.android.gms.cast.MediaMetadata
+import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.cast.framework.CastSession
+import com.google.android.gms.cast.framework.SessionManagerListener
+import com.google.android.gms.cast.framework.media.RemoteMediaClient
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 
@@ -336,47 +350,283 @@ fun CastOrLocalPlayerView(
     val castContext = remember {
         try { CastContext.getSharedInstance(context) } catch (e: Exception) { null }
     }
-    val castSession = castContext?.sessionManager?.currentCastSession
 
-    if (castSession != null && castSession.isConnected) {
-        // Transmisión activa a Chromecast
-        LaunchedEffect(channel) {
-            val movieMetadata = MediaMetadata(MediaMetadata.MEDIA_TYPE_MOVIE).apply {
+    var currentCastSession by remember {
+        mutableStateOf(castContext?.sessionManager?.currentCastSession)
+    }
+
+    DisposableEffect(castContext) {
+        val sessionManager = castContext?.sessionManager
+        val listener = object : SessionManagerListener<CastSession> {
+            override fun onSessionStarted(session: CastSession, sessionId: String) {
+                currentCastSession = session
+            }
+            override fun onSessionResumed(session: CastSession, wasSuspended: Boolean) {
+                currentCastSession = session
+            }
+            override fun onSessionEnded(session: CastSession, error: Int) {
+                currentCastSession = null
+            }
+            override fun onSessionSuspended(session: CastSession, reason: Int) {
+                currentCastSession = null
+            }
+            override fun onSessionStarting(session: CastSession) {}
+            override fun onSessionStartFailed(session: CastSession, error: Int) {
+                currentCastSession = null
+            }
+            override fun onSessionEnding(session: CastSession) {}
+            override fun onSessionResuming(session: CastSession, sessionId: String) {}
+            override fun onSessionResumeFailed(session: CastSession, error: Int) {
+                currentCastSession = null
+            }
+        }
+        try {
+            sessionManager?.addSessionManagerListener(listener, CastSession::class.java)
+        } catch (_: Exception) {}
+
+        onDispose {
+            try {
+                sessionManager?.removeSessionManagerListener(listener, CastSession::class.java)
+            } catch (_: Exception) {}
+        }
+    }
+
+    val isCasting = currentCastSession?.isConnected == true
+
+    if (isCasting && currentCastSession != null) {
+        val session = currentCastSession!!
+        val remoteMediaClient = session.remoteMediaClient
+        var isPlayingOnCast by remember { mutableStateOf(remoteMediaClient?.isPlaying == true) }
+        var isBufferingOnCast by remember { mutableStateOf(remoteMediaClient?.isBuffering == true) }
+
+        DisposableEffect(remoteMediaClient) {
+            val callback = object : RemoteMediaClient.Callback() {
+                override fun onStatusUpdated() {
+                    isPlayingOnCast = remoteMediaClient?.isPlaying == true
+                    isBufferingOnCast = remoteMediaClient?.isBuffering == true
+                }
+            }
+            remoteMediaClient?.registerCallback(callback)
+            onDispose {
+                remoteMediaClient?.unregisterCallback(callback)
+            }
+        }
+
+        // Transmisión activa a Chromecast con detección dinámica de VOD vs En Vivo
+        LaunchedEffect(channel, session) {
+            val isVod = channel.category.equals("ghibli", ignoreCase = true) ||
+                    channel.url.endsWith(".mp4", ignoreCase = true) ||
+                    channel.url.contains(".mp4?", ignoreCase = true)
+
+            val streamType = if (isVod) MediaInfo.STREAM_TYPE_BUFFERED else MediaInfo.STREAM_TYPE_LIVE
+            val contentType = when {
+                channel.url.contains(".mp4", ignoreCase = true) -> "video/mp4"
+                channel.url.contains(".mkv", ignoreCase = true) -> "video/x-matroska"
+                channel.url.contains(".mpd", ignoreCase = true) -> "application/dash+xml"
+                else -> "application/x-mpegurl"
+            }
+
+            val mediaType = if (isVod) MediaMetadata.MEDIA_TYPE_MOVIE else MediaMetadata.MEDIA_TYPE_TV_SHOW
+            val movieMetadata = MediaMetadata(mediaType).apply {
                 putString(MediaMetadata.KEY_TITLE, channel.name)
+                putString(MediaMetadata.KEY_SUBTITLE, if (isVod) "Studio Ghibli • Película" else "Emisión en Directo")
             }
             if (channel.logo.isNotEmpty()) {
-                movieMetadata.addImage(com.google.android.gms.common.images.WebImage(Uri.parse(channel.logo)))
+                try {
+                    movieMetadata.addImage(com.google.android.gms.common.images.WebImage(Uri.parse(channel.logo)))
+                } catch (_: Exception) {}
             }
 
             val mediaInfo = MediaInfo.Builder(channel.url)
-                .setStreamType(MediaInfo.STREAM_TYPE_LIVE)
-                .setContentType("application/x-mpegurl")
+                .setStreamType(streamType)
+                .setContentType(contentType)
                 .setMetadata(movieMetadata)
                 .build()
 
-            val request = MediaLoadRequestData.Builder()
+            val requestBuilder = MediaLoadRequestData.Builder()
                 .setMediaInfo(mediaInfo)
                 .setAutoplay(true)
-                .build()
 
-            castSession.remoteMediaClient?.load(request)
+            if (isVod) {
+                val savedInfo = GhibliPlaybackStore.getSavedPosition(context, channel.name)
+                if (savedInfo != null && savedInfo.first >= GhibliPlaybackStore.MIN_RESUME_THRESHOLD_MS) {
+                    requestBuilder.setCurrentTime(savedInfo.first)
+                }
+            }
+
+            remoteMediaClient?.load(requestBuilder.build())
         }
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
-            contentAlignment = Alignment.Center
+                .background(Color(0xFF0F172A))
+                .statusBarsPadding()
+                .navigationBarsPadding()
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Transmitiendo a Google Cast...", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(channel.name, color = MobilePrimary, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                Spacer(modifier = Modifier.height(24.dp))
-                CircularProgressIndicator(color = MobilePrimary)
+            // Barra superior del control de Cast
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onClose) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Volver al catálogo",
+                        tint = Color.White
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                // Botón de gestión de dispositivo Google Cast
+                AndroidView(
+                    modifier = Modifier.size(40.dp),
+                    factory = { ctx ->
+                        MediaRouteButton(ctx).apply {
+                            try {
+                                CastButtonFactory.setUpMediaRouteButton(ctx, this)
+                            } catch (_: Exception) {}
+                        }
+                    }
+                )
+            }
+
+            // Contenido central del control de Cast
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Insignia del dispositivo receptor
+                val deviceName = session.castDevice?.friendlyName ?: "Google Cast"
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = MobilePrimary.copy(alpha = 0.15f),
+                    modifier = Modifier.padding(bottom = 24.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Filled.CastConnected,
+                            contentDescription = null,
+                            tint = MobilePrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Transmitiendo en $deviceName",
+                            color = MobilePrimary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                // Logotipo del canal o carátula de película
+                if (channel.logo.isNotBlank()) {
+                    AsyncImage(
+                        model = channel.logo,
+                        contentDescription = channel.name,
+                        modifier = Modifier
+                            .size(110.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0x33FFFFFF))
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
+
+                // Título del canal
+                Text(
+                    text = channel.name,
+                    color = Color.White,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = if (channel.category.equals("ghibli", ignoreCase = true)) "Película VOD" else "Canal en vivo",
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                // Estado de reproducción
+                if (isBufferingOnCast) {
+                    CircularProgressIndicator(
+                        color = MobilePrimary,
+                        modifier = Modifier.size(36.dp),
+                        strokeWidth = 3.dp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Conectando señal...",
+                        color = Color.LightGray,
+                        fontSize = 13.sp
+                    )
+                } else {
+                    Text(
+                        text = if (isPlayingOnCast) "▶ En reproducción en pantalla grande" else "⏸ En pausa",
+                        color = if (isPlayingOnCast) Color(0xFF10B981) else Color(0xFFF59E0B),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(32.dp))
-                OutlinedButton(onClick = onClose) {
-                    Text("Detener transmisión", color = Color.White)
+
+                // Botón principal de Reproducción / Pausa en TV
+                FilledIconButton(
+                    onClick = {
+                        if (isPlayingOnCast) {
+                            remoteMediaClient?.pause()
+                        } else {
+                            remoteMediaClient?.play()
+                        }
+                    },
+                    modifier = Modifier.size(64.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = MobilePrimary)
+                ) {
+                    Icon(
+                        imageVector = if (isPlayingOnCast) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                        contentDescription = if (isPlayingOnCast) "Pausar" else "Reproducir",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(36.dp))
+
+                // Fila de acciones: Detener reproducción y Desconectar Cast
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OutlinedButton(
+                        onClick = {
+                            try {
+                                remoteMediaClient?.stop()
+                            } catch (_: Exception) {}
+                            onClose()
+                        },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                    ) {
+                        Text("Detener transmisión")
+                    }
+
+                    Button(
+                        onClick = {
+                            try {
+                                castContext?.sessionManager?.endCurrentSession(true)
+                            } catch (_: Exception) {}
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                    ) {
+                        Text("Desconectar TV", color = Color.White)
+                    }
                 }
             }
         }

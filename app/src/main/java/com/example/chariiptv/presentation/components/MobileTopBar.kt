@@ -153,7 +153,9 @@ fun MobileTopBar(
                 modifier = Modifier.size(40.dp),
                 factory = { ctx ->
                     MediaRouteButton(ctx).apply {
-                        CastButtonFactory.setUpMediaRouteButton(ctx, this)
+                        try {
+                            CastButtonFactory.setUpMediaRouteButton(ctx, this)
+                        } catch (_: Exception) {}
                     }
                 }
             )
