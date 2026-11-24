@@ -399,11 +399,19 @@ fun CastOrLocalPlayerView(
         var isPlayingOnCast by remember { mutableStateOf(remoteMediaClient?.isPlaying == true) }
         var isBufferingOnCast by remember { mutableStateOf(remoteMediaClient?.isBuffering == true) }
 
+        var castErrorMessage by remember { mutableStateOf<String?>(null) }
+
         DisposableEffect(remoteMediaClient) {
             val callback = object : RemoteMediaClient.Callback() {
                 override fun onStatusUpdated() {
                     isPlayingOnCast = remoteMediaClient?.isPlaying == true
                     isBufferingOnCast = remoteMediaClient?.isBuffering == true
+                    val mediaStatus = remoteMediaClient?.mediaStatus
+                    if (mediaStatus != null && mediaStatus.idleReason == com.google.android.gms.cast.MediaStatus.IDLE_REASON_ERROR) {
+                        castErrorMessage = "La televisión no pudo cargar esta señal (formato o enlace no admitido por Chromecast)"
+                    } else if (isPlayingOnCast) {
+                        castErrorMessage = null
+                    }
                 }
             }
             remoteMediaClient?.registerCallback(callback)
@@ -414,6 +422,7 @@ fun CastOrLocalPlayerView(
 
         // Transmisión activa a Chromecast con detección dinámica de VOD vs En Vivo
         LaunchedEffect(channel, session) {
+            castErrorMessage = null
             val isVod = channel.category.equals("ghibli", ignoreCase = true) ||
                     channel.url.endsWith(".mp4", ignoreCase = true) ||
                     channel.url.contains(".mp4?", ignoreCase = true)
@@ -426,21 +435,22 @@ fun CastOrLocalPlayerView(
                 else -> "application/x-mpegurl"
             }
 
-            val mediaType = if (isVod) MediaMetadata.MEDIA_TYPE_MOVIE else MediaMetadata.MEDIA_TYPE_TV_SHOW
-            val movieMetadata = MediaMetadata(mediaType).apply {
+            // Usar MEDIA_TYPE_GENERIC para IPTV en vivo (evita el error 2001 INVALID_REQUEST de MEDIA_TYPE_TV_SHOW)
+            val mediaType = if (isVod) MediaMetadata.MEDIA_TYPE_MOVIE else MediaMetadata.MEDIA_TYPE_GENERIC
+            val metadata = MediaMetadata(mediaType).apply {
                 putString(MediaMetadata.KEY_TITLE, channel.name)
                 putString(MediaMetadata.KEY_SUBTITLE, if (isVod) "Studio Ghibli • Película" else "Emisión en Directo")
             }
-            if (channel.logo.isNotEmpty()) {
+            if (channel.logo.isNotEmpty() && !channel.logo.contains(".svg", ignoreCase = true)) {
                 try {
-                    movieMetadata.addImage(com.google.android.gms.common.images.WebImage(Uri.parse(channel.logo)))
+                    metadata.addImage(com.google.android.gms.common.images.WebImage(Uri.parse(channel.logo)))
                 } catch (_: Exception) {}
             }
 
             val mediaInfo = MediaInfo.Builder(channel.url)
                 .setStreamType(streamType)
                 .setContentType(contentType)
-                .setMetadata(movieMetadata)
+                .setMetadata(metadata)
                 .build()
 
             val requestBuilder = MediaLoadRequestData.Builder()
@@ -454,7 +464,25 @@ fun CastOrLocalPlayerView(
                 }
             }
 
-            remoteMediaClient?.load(requestBuilder.build())
+            // Esperar a que remoteMediaClient esté enlazado al receptor
+            var client = session.remoteMediaClient
+            var attempts = 0
+            while (client == null && attempts < 20) {
+                delay(200)
+                client = session.remoteMediaClient
+                attempts++
+            }
+
+            if (client != null) {
+                val pending = client.load(requestBuilder.build())
+                pending?.setResultCallback { result ->
+                    if (!result.status.isSuccess) {
+                        castErrorMessage = "Error al iniciar en TV: ${result.status.statusMessage ?: "Señal rechazada por Chromecast"}"
+                    }
+                }
+            } else {
+                castErrorMessage = "No se pudo establecer el canal de medios con la TV"
+            }
         }
 
         Box(
@@ -557,8 +585,39 @@ fun CastOrLocalPlayerView(
 
                 Spacer(modifier = Modifier.height(28.dp))
 
-                // Estado de reproducción
-                if (isBufferingOnCast) {
+                // Estado de reproducción o aviso de error
+                if (castErrorMessage != null) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0x33EF4444),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(14.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = castErrorMessage ?: "",
+                                color = Color(0xFFFCA5A5),
+                                fontSize = 12.sp,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Button(
+                                onClick = {
+                                    try {
+                                        castContext?.sessionManager?.endCurrentSession(true)
+                                    } catch (_: Exception) {}
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = MobilePrimary)
+                            ) {
+                                Text("Ver en pantalla del celular", fontSize = 12.sp, color = Color.White)
+                            }
+                        }
+                    }
+                } else if (isBufferingOnCast) {
                     CircularProgressIndicator(
                         color = MobilePrimary,
                         modifier = Modifier.size(36.dp),
