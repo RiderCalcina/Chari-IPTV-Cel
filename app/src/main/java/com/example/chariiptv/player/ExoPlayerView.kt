@@ -230,12 +230,11 @@ fun ExoPlayerView(
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_PAUSE -> {
-                    // Si la actividad entra en Picture-in-Picture (PiP), Android envía ON_PAUSE pero la
-                    // reproducción DEBE continuar activa en la minipantalla flotante.
                     val inPip = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && activity != null) {
                         activity.isInPictureInPictureMode
                     } else false
                     if (!inPip) {
+                        player.playWhenReady = false
                         player.pause()
                     }
                 }
@@ -244,6 +243,7 @@ fun ExoPlayerView(
                         activity.isInPictureInPictureMode
                     } else false
                     if (!inPip) {
+                        player.playWhenReady = false
                         player.pause()
                     }
                 }
@@ -253,6 +253,8 @@ fun ExoPlayerView(
                     }
                 }
                 Lifecycle.Event.ON_DESTROY -> {
+                    player.playWhenReady = false
+                    player.stop()
                     player.release()
                 }
                 else -> {}
@@ -262,6 +264,8 @@ fun ExoPlayerView(
 
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+            player.playWhenReady = false
+            player.stop()
             player.release()
             exoPlayer = null
         }

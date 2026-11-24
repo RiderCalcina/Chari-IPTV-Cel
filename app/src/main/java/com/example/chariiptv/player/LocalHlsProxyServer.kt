@@ -27,6 +27,25 @@ class LocalHlsProxyServer @Inject constructor(
         private const val DEFAULT_UA =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
         private val PRIVATE_IP_REGEX = Regex("^(?:127\\.|10\\.|192\\.168\\.|169\\.254\\.|172\\.(?:1[6-9]|2[0-9]|3[01])\\.)")
+
+        fun getLocalWifiIp(): String? {
+            try {
+                val interfaces = java.util.Collections.list(java.net.NetworkInterface.getNetworkInterfaces())
+                for (intf in interfaces) {
+                    if (intf.isLoopback || !intf.isUp) continue
+                    val addrs = java.util.Collections.list(intf.inetAddresses)
+                    for (addr in addrs) {
+                        if (!addr.isLoopbackAddress && addr is java.net.Inet4Address) {
+                            val host = addr.hostAddress
+                            if (!host.isNullOrBlank() && !host.startsWith("127.")) {
+                                return host
+                            }
+                        }
+                    }
+                }
+            } catch (_: Exception) {}
+            return null
+        }
     }
 
     private var serverSocket: ServerSocket? = null
@@ -56,10 +75,10 @@ class LocalHlsProxyServer @Inject constructor(
     fun start() {
         if (isRunning && serverSocket != null && !serverSocket!!.isClosed) return
         try {
-            serverSocket = ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"))
+            serverSocket = ServerSocket(0, 50, InetAddress.getByName("0.0.0.0"))
             port = serverSocket!!.localPort
             isRunning = true
-            Log.i(TAG, "LocalHlsProxyServer iniciado bajo demanda en loopback puerto $port")
+            Log.i(TAG, "LocalHlsProxyServer iniciado en puerto $port")
 
             Thread({
                 while (isRunning && serverSocket?.isClosed == false) {
@@ -90,13 +109,24 @@ class LocalHlsProxyServer @Inject constructor(
         userAgent: String = "",
         autoReferer: Boolean = false
     ): String {
+        return buildCastProxyUrl("127.0.0.1", streamUrl, referer, origin, userAgent, autoReferer)
+    }
+
+    fun buildCastProxyUrl(
+        hostIp: String,
+        streamUrl: String,
+        referer: String = "",
+        origin: String = "",
+        userAgent: String = "",
+        autoReferer: Boolean = false
+    ): String {
         if (!isRunning || port == 0) start()
         val encodedUrl = Uri.encode(streamUrl)
         val encodedReferer = if (referer.isNotBlank()) Uri.encode(referer) else ""
         val encodedOrigin = if (origin.isNotBlank()) Uri.encode(origin) else ""
         val encodedUa = if (userAgent.isNotBlank()) Uri.encode(userAgent) else ""
 
-        var proxyUrl = "http://127.0.0.1:$port/stream?url=$encodedUrl"
+        var proxyUrl = "http://$hostIp:$port/stream?url=$encodedUrl"
         if (encodedReferer.isNotBlank()) proxyUrl += "&referer=$encodedReferer"
         if (encodedOrigin.isNotBlank()) proxyUrl += "&origin=$encodedOrigin"
         if (encodedUa.isNotBlank()) proxyUrl += "&ua=$encodedUa"
@@ -111,7 +141,23 @@ class LocalHlsProxyServer @Inject constructor(
                 val reader = BufferedReader(InputStreamReader(s.getInputStream()))
                 val requestLine = reader.readLine() ?: return
                 val parts = requestLine.split(" ")
-                if (parts.size < 2 || parts[0] != "GET") {
+                if (parts.size < 2) return
+
+                // Responder de inmediato a peticiones preflight CORS OPTIONS de Chromecast / navegadores
+                if (parts[0].equals("OPTIONS", ignoreCase = true)) {
+                    val output = s.getOutputStream()
+                    val writer = PrintWriter(output)
+                    writer.print("HTTP/1.1 204 No Content\r\n")
+                    writer.print("Access-Control-Allow-Origin: *\r\n")
+                    writer.print("Access-Control-Allow-Methods: GET, HEAD, OPTIONS\r\n")
+                    writer.print("Access-Control-Allow-Headers: *\r\n")
+                    writer.print("Access-Control-Max-Age: 86400\r\n")
+                    writer.print("Connection: close\r\n\r\n")
+                    writer.flush()
+                    return
+                }
+
+                if (!parts[0].equals("GET", ignoreCase = true) && !parts[0].equals("HEAD", ignoreCase = true)) {
                     return
                 }
 
@@ -165,6 +211,13 @@ class LocalHlsProxyServer @Inject constructor(
                     reqBuilder.header("Origin", effectiveOrigin)
                 }
 
+                val rawHost = s.localAddress?.hostAddress?.substringBefore("%") ?: "127.0.0.1"
+                val localHost = if (rawHost == "0.0.0.0" || rawHost.startsWith("::") || rawHost.isBlank()) {
+                    getLocalWifiIp() ?: "127.0.0.1"
+                } else {
+                    rawHost
+                }
+
                 // Garantiza el cierre de ResponseBody incluso ante Broken Pipe al cambiar de canal
                 client.newCall(reqBuilder.build()).execute().use { response ->
                     val output = s.getOutputStream()
@@ -185,7 +238,8 @@ class LocalHlsProxyServer @Inject constructor(
                                 referer = explicitReferer,
                                 origin = explicitOrigin,
                                 ua = userAgent,
-                                autoReferer = autoReferer
+                                autoReferer = autoReferer,
+                                hostIp = localHost
                             )
                             val bodyBytes = rewritten.toByteArray(Charsets.UTF_8)
 
@@ -193,6 +247,8 @@ class LocalHlsProxyServer @Inject constructor(
                             writer.print("Content-Type: application/vnd.apple.mpegurl\r\n")
                             writer.print("Content-Length: ${bodyBytes.size}\r\n")
                             writer.print("Access-Control-Allow-Origin: *\r\n")
+                            writer.print("Access-Control-Allow-Methods: GET, HEAD, OPTIONS\r\n")
+                            writer.print("Access-Control-Allow-Headers: *\r\n")
                             writer.print("Connection: close\r\n\r\n")
                             writer.flush()
                             output.write(bodyBytes)
@@ -202,12 +258,15 @@ class LocalHlsProxyServer @Inject constructor(
                             response.headers.forEach { pair ->
                                 val name = pair.first
                                 if (!name.equals("Transfer-Encoding", ignoreCase = true) &&
-                                    !name.equals("Connection", ignoreCase = true)
+                                    !name.equals("Connection", ignoreCase = true) &&
+                                    !name.startsWith("Access-Control-", ignoreCase = true)
                                 ) {
                                     writer.print("$name: ${pair.second}\r\n")
                                 }
                             }
                             writer.print("Access-Control-Allow-Origin: *\r\n")
+                            writer.print("Access-Control-Allow-Methods: GET, HEAD, OPTIONS\r\n")
+                            writer.print("Access-Control-Allow-Headers: *\r\n")
                             writer.print("Connection: close\r\n\r\n")
                             writer.flush()
                             response.body?.byteStream()?.use { input ->
@@ -216,7 +275,7 @@ class LocalHlsProxyServer @Inject constructor(
                             output.flush()
                         }
                     } else {
-                        writer.print("HTTP/1.1 ${response.code} ${response.message}\r\nConnection: close\r\n\r\n")
+                        writer.print("HTTP/1.1 ${response.code} ${response.message}\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n")
                         writer.flush()
                     }
                 }
@@ -232,7 +291,8 @@ class LocalHlsProxyServer @Inject constructor(
         referer: String,
         origin: String,
         ua: String,
-        autoReferer: Boolean
+        autoReferer: Boolean,
+        hostIp: String = "127.0.0.1"
     ): String {
         val baseUri = Uri.parse(manifestUrl)
         val sb = StringBuilder(content.length + 512)
@@ -255,7 +315,7 @@ class LocalHlsProxyServer @Inject constructor(
                     val rewrittenTag = TAG_URI_REGEX.replace(trimmed) { match ->
                         val rawTagUri = match.groupValues[1]
                         val resolvedTagUri = resolveUrl(baseUri, rawTagUri)
-                        val proxyTagUri = buildProxyUrl(resolvedTagUri, referer, origin, ua, autoReferer)
+                        val proxyTagUri = buildCastProxyUrl(hostIp, resolvedTagUri, referer, origin, ua, autoReferer)
                         "URI=\"$proxyTagUri\""
                     }
                     sb.append(rewrittenTag).append("\n")
@@ -264,7 +324,7 @@ class LocalHlsProxyServer @Inject constructor(
                 sb.append(trimmed).append("\n")
             } else {
                 val resolvedUrl = resolveUrl(baseUri, trimmed)
-                val proxySegmentUrl = buildProxyUrl(resolvedUrl, referer, origin, ua, autoReferer)
+                val proxySegmentUrl = buildCastProxyUrl(hostIp, resolvedUrl, referer, origin, ua, autoReferer)
                 sb.append(proxySegmentUrl).append("\n")
             }
         }
@@ -324,7 +384,7 @@ class LocalHlsProxyServer @Inject constructor(
     private fun sendForbidden(socket: Socket) {
         try {
             val writer = PrintWriter(socket.getOutputStream())
-            writer.print("HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nAcceso bloqueado por regla Anti-SSRF")
+            writer.print("HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\nAcceso bloqueado por regla Anti-SSRF")
             writer.flush()
             socket.close()
         } catch (_: Exception) {}
@@ -333,7 +393,7 @@ class LocalHlsProxyServer @Inject constructor(
     private fun sendNotFound(socket: Socket) {
         try {
             val writer = PrintWriter(socket.getOutputStream())
-            writer.print("HTTP/1.1 404 Not Found\r\n\r\n")
+            writer.print("HTTP/1.1 404 Not Found\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n")
             writer.flush()
             socket.close()
         } catch (_: Exception) {}

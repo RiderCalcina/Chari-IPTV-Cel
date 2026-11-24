@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Rational
+import androidx.activity.viewModels
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -43,6 +44,8 @@ import coil.compose.AsyncImage
 import com.example.chariiptv.domain.Channel
 import com.example.chariiptv.domain.GhibliPlaybackStore
 import com.example.chariiptv.player.ExoPlayerView
+import com.example.chariiptv.player.LocalHlsProxyServer
+import com.example.chariiptv.player.PlayerEntryPoint
 import com.example.chariiptv.presentation.TvViewModel
 import com.example.chariiptv.presentation.components.ImportantModalDialog
 import com.example.chariiptv.presentation.components.MobileChannelCard
@@ -59,11 +62,13 @@ import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener
 import com.google.android.gms.cast.framework.media.RemoteMediaClient
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.delay
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
 
+    private val viewModel: TvViewModel by viewModels()
     private var isPlayingChannel = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,7 +84,6 @@ class MainActivity : FragmentActivity() {
 
         setContent {
             TVDROIDTheme {
-                val viewModel: TvViewModel = hiltViewModel()
                 val uiState by viewModel.uiState.collectAsState()
 
                 isPlayingChannel = (uiState.currentChannel != null)
@@ -337,6 +341,30 @@ class MainActivity : FragmentActivity() {
             }
         }
     }
+
+    override fun onStop() {
+        super.onStop()
+        // Si no está activamente en modo Picture-in-Picture, detener inmediatamente la reproducción
+        // para evitar fugas de audio en segundo plano al salir o minimizar la app
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInPictureInPictureMode) {
+            // Permitir continuidad de reproducción en ventana flotante PiP
+        } else {
+            viewModel.playChannel(null)
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        viewModel.playChannel(null)
+    }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        // Si el usuario cerró la ventana flotante PiP (deslizada hacia la X)
+        if (!isInPictureInPictureMode && lifecycle.currentState < androidx.lifecycle.Lifecycle.State.RESUMED) {
+            viewModel.playChannel(null)
+        }
+    }
 }
 
 @Composable
@@ -347,6 +375,13 @@ fun CastOrLocalPlayerView(
     onClose: () -> Unit
 ) {
     val context = LocalContext.current
+    val localProxyServer = remember(context) {
+        try {
+            EntryPointAccessors.fromApplication(context.applicationContext, PlayerEntryPoint::class.java).localHlsProxyServer()
+        } catch (_: Exception) {
+            null
+        }
+    }
     val castContext = remember {
         try { CastContext.getSharedInstance(context) } catch (e: Exception) { null }
     }
@@ -447,7 +482,27 @@ fun CastOrLocalPlayerView(
                 } catch (_: Exception) {}
             }
 
-            val mediaInfo = MediaInfo.Builder(channel.url)
+            // Para transmisiones en vivo / HLS, transmitimos a través del proxy local del celular
+            // en la red Wi-Fi compartida. Esto neutraliza las políticas CORS estrictas (como Pluto TV:
+            // 'Access-Control-Allow-Origin: http://pluto.tv') e inyecta Referer / User-Agent correctos
+            // garantizando que el receptor Chromecast de la TV cargue los segmentos sin error.
+            val wifiIp = LocalHlsProxyServer.getLocalWifiIp()
+            val effectiveCastUrl = if (!isVod && wifiIp != null && localProxyServer != null) {
+                localProxyServer.buildCastProxyUrl(
+                    hostIp = wifiIp,
+                    streamUrl = channel.url,
+                    referer = channel.referer,
+                    origin = "",
+                    userAgent = channel.userAgent,
+                    autoReferer = true
+                )
+            } else {
+                channel.url
+            }
+
+            android.util.Log.i("CastPlayer", "Iniciando Cast con URL: $effectiveCastUrl (isVod=$isVod, wifiIp=$wifiIp)")
+
+            val mediaInfo = MediaInfo.Builder(effectiveCastUrl)
                 .setStreamType(streamType)
                 .setContentType(contentType)
                 .setMetadata(metadata)
@@ -681,6 +736,7 @@ fun CastOrLocalPlayerView(
                             try {
                                 castContext?.sessionManager?.endCurrentSession(true)
                             } catch (_: Exception) {}
+                            onClose()
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
                     ) {
