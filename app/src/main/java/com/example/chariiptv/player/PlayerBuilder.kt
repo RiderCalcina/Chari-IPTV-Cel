@@ -1,6 +1,7 @@
 package com.example.chariiptv.player
 
 import android.content.Context
+import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
@@ -62,6 +63,13 @@ object PlayerBuilder {
             .setMediaSourceFactory(mediaSourceFactory)
             .setLoadControl(loadControl)
             .setWakeMode(C.WAKE_MODE_NETWORK)
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                    .setUsage(C.USAGE_MEDIA)
+                    .build(),
+                /* handleAudioFocus = */ true
+            )
             .build()
     }
 }

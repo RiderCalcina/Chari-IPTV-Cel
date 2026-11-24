@@ -15,7 +15,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -72,6 +73,13 @@ class MainActivity : FragmentActivity() {
                 var notificationMessage by remember { mutableStateOf<String?>(null) }
                 var showImportantDialog by remember { mutableStateOf(false) }
 
+                val gridState = rememberLazyGridState()
+
+                // Reiniciar el scroll arriba solo cuando cambia la categoría o el país seleccionado
+                LaunchedEffect(uiState.selectedFilterId, uiState.selectedCountryCode) {
+                    gridState.scrollToItem(0)
+                }
+
                 LaunchedEffect(notificationMessage) {
                     if (notificationMessage != null) {
                         delay(2000)
@@ -114,130 +122,129 @@ class MainActivity : FragmentActivity() {
                             .padding(innerPadding)
                             .background(MobileBackground)
                     ) {
-                        if (uiState.currentChannel == null) {
-                            // Cuadrícula Principal de Canales / Películas
-                            val channels = uiState.filteredChannels
-                            val isGhibli = uiState.selectedFilterId == "ghibli"
+                        // Cuadrícula Principal de Canales / Películas (siempre montada para conservar la posición exacta de scroll)
+                        val channels = uiState.filteredChannels
+                        val isGhibli = uiState.selectedFilterId == "ghibli"
 
-                            if (uiState.isLoading) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        CircularProgressIndicator(color = MobilePrimary, strokeWidth = 3.dp)
-                                        Spacer(modifier = Modifier.height(16.dp))
-                                        Text(
-                                            text = "Cargando catálogo...",
-                                            color = Color.LightGray,
-                                            fontSize = 14.sp
-                                        )
-                                    }
+                        if (uiState.isLoading) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    CircularProgressIndicator(color = MobilePrimary, strokeWidth = 3.dp)
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = "Cargando catálogo...",
+                                        color = Color.LightGray,
+                                        fontSize = 14.sp
+                                    )
                                 }
-                            } else if (channels.isEmpty()) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        modifier = Modifier.padding(24.dp)
-                                    ) {
-                                        Text(
-                                            text = if (uiState.searchQuery.isNotEmpty()) "🔍" else "📺",
-                                            fontSize = 48.sp
-                                        )
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        Text(
-                                            text = if (uiState.searchQuery.isNotEmpty()) {
-                                                "No se encontraron resultados para '${uiState.searchQuery}'"
-                                            } else if (uiState.selectedFilterId == "fav") {
-                                                "Aún no tienes canales favoritos.\nMantén presionado cualquier canal para añadirlo."
-                                            } else {
-                                                "No hay canales disponibles en esta sección."
-                                            },
-                                            color = Color.LightGray,
-                                            textAlign = TextAlign.Center,
-                                            fontSize = 14.sp
-                                        )
-                                    }
-                                }
-                            } else {
+                            }
+                        } else if (channels.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Column(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(horizontal = 12.dp)
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(24.dp)
                                 ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
+                                    Text(
+                                        text = if (uiState.searchQuery.isNotEmpty()) "🔍" else "📺",
+                                        fontSize = 48.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Text(
+                                        text = if (uiState.searchQuery.isNotEmpty()) {
+                                            "No se encontraron resultados para '${uiState.searchQuery}'"
+                                        } else if (uiState.selectedFilterId == "fav") {
+                                            "Aún no tienes canales favoritos.\nMantén presionado cualquier canal para añadirlo."
+                                        } else {
+                                            "No hay canales disponibles en esta sección."
+                                        },
+                                        color = Color.LightGray,
+                                        textAlign = TextAlign.Center,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            }
+                        } else {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "${channels.size} ${if (isGhibli) "obras cinematográficas" else "canales activos"}",
+                                        color = Color.Gray,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Spacer(modifier = Modifier.weight(1f))
+                                    if (uiState.selectedFilterId == "countries") {
                                         Text(
-                                            text = "${channels.size} ${if (isGhibli) "obras cinematográficas" else "canales activos"}",
-                                            color = Color.Gray,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Medium
+                                            text = Constants.COUNTRY_FLAGS[uiState.selectedCountryCode] ?: "",
+                                            fontSize = 16.sp
                                         )
-                                        Spacer(modifier = Modifier.weight(1f))
-                                        if (uiState.selectedFilterId == "countries") {
-                                            Text(
-                                                text = Constants.COUNTRY_FLAGS[uiState.selectedCountryCode] ?: "",
-                                                fontSize = 16.sp
-                                            )
-                                        }
                                     }
+                                }
 
-                                    LazyVerticalGrid(
-                                        columns = GridCells.Adaptive(minSize = if (isGhibli) 110.dp else 95.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentPadding = PaddingValues(bottom = 24.dp)
-                                    ) {
-                                        items(
-                                            items = channels,
-                                            key = { it.url }
-                                        ) { channel ->
-                                            val isFav = uiState.favorites.contains(channel.url)
+                                LazyVerticalGrid(
+                                    state = gridState,
+                                    columns = GridCells.Adaptive(minSize = if (isGhibli) 110.dp else 95.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = PaddingValues(bottom = 24.dp)
+                                ) {
+                                    itemsIndexed(
+                                        items = channels,
+                                        key = { index, channel -> "${channel.name}_${channel.url}_$index" }
+                                    ) { _, channel ->
+                                        val isFav = uiState.favorites.contains(channel.url)
 
-                                            if (isGhibli) {
-                                                MobileGhibliCard(
-                                                    channel = channel,
-                                                    isFavorite = isFav,
-                                                    onClick = { viewModel.playChannel(channel) },
-                                                    onLongClick = {
-                                                        viewModel.toggleFavorite(channel)
-                                                        notificationMessage = if (isFav) {
-                                                            getString(R.string.removed_from_favorites)
-                                                        } else {
-                                                            getString(R.string.added_to_favorites)
-                                                        }
+                                        if (isGhibli) {
+                                            MobileGhibliCard(
+                                                channel = channel,
+                                                isFavorite = isFav,
+                                                onClick = { viewModel.playChannel(channel) },
+                                                onLongClick = {
+                                                    viewModel.toggleFavorite(channel)
+                                                    notificationMessage = if (isFav) {
+                                                        getString(R.string.removed_from_favorites)
+                                                    } else {
+                                                        getString(R.string.added_to_favorites)
                                                     }
-                                                )
-                                            } else {
-                                                MobileChannelCard(
-                                                    channel = channel,
-                                                    isFavorite = isFav,
-                                                    onClick = { viewModel.playChannel(channel) },
-                                                    onLongClick = {
-                                                        viewModel.toggleFavorite(channel)
-                                                        notificationMessage = if (isFav) {
-                                                            getString(R.string.removed_from_favorites)
-                                                        } else {
-                                                            getString(R.string.added_to_favorites)
-                                                        }
+                                                }
+                                            )
+                                        } else {
+                                            MobileChannelCard(
+                                                channel = channel,
+                                                isFavorite = isFav,
+                                                onClick = { viewModel.playChannel(channel) },
+                                                onLongClick = {
+                                                    viewModel.toggleFavorite(channel)
+                                                    notificationMessage = if (isFav) {
+                                                        getString(R.string.removed_from_favorites)
+                                                    } else {
+                                                        getString(R.string.added_to_favorites)
                                                     }
-                                                )
-                                            }
+                                                }
+                                            )
                                         }
                                     }
                                 }
                             }
                         }
 
-                        // Vista de Reproducción (ExoPlayer Móvil o Google Cast)
+                        // Vista de Reproducción en Capa Superior (ExoPlayer Móvil o Google Cast)
                         if (uiState.currentChannel != null) {
                             val activeChannel = uiState.currentChannel!!
 
@@ -253,20 +260,26 @@ class MainActivity : FragmentActivity() {
                                 viewModel.playChannel(null)
                             }
 
-                            CastOrLocalPlayerView(
-                                channel = activeChannel,
-                                isFavorite = uiState.favorites.contains(activeChannel.url),
-                                onToggleFavorite = {
-                                    viewModel.toggleFavorite(activeChannel)
-                                    val isFav = uiState.favorites.contains(activeChannel.url)
-                                    notificationMessage = if (isFav) {
-                                        getString(R.string.removed_from_favorites)
-                                    } else {
-                                        getString(R.string.added_to_favorites)
-                                    }
-                                },
-                                onClose = { viewModel.playChannel(null) }
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.Black)
+                            ) {
+                                CastOrLocalPlayerView(
+                                    channel = activeChannel,
+                                    isFavorite = uiState.favorites.contains(activeChannel.url),
+                                    onToggleFavorite = {
+                                        viewModel.toggleFavorite(activeChannel)
+                                        val isFav = uiState.favorites.contains(activeChannel.url)
+                                        notificationMessage = if (isFav) {
+                                            getString(R.string.removed_from_favorites)
+                                        } else {
+                                            getString(R.string.added_to_favorites)
+                                        }
+                                    },
+                                    onClose = { viewModel.playChannel(null) }
+                                )
+                            }
                         }
 
                         // Diálogo modal "Importante" (Donaciones PayPal, Yape y Web Oficial)
