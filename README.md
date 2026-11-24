@@ -1,45 +1,122 @@
-# Chary-IPTV (Versión Móvil) 📱
+# Chari-IPTV Cel (Versión Móvil) 📱✨
 
-**Chary-IPTV** es la versión diseñada específicamente para dispositivos móviles Android del proyecto original de televisión [Chari-IPTV](https://github.com/RiderCalcina/Chari-IPTV). 
+[![Android](https://img.shields.io/badge/Plataforma-Android%207.0%2B%20(API%2024%2B)-green.svg)](https://developer.android.com)
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.9.0%2B-blue.svg)](https://kotlinlang.org)
+[![Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-purple.svg)](https://developer.android.com/jetpack/compose)
+[![Version](https://img.shields.io/badge/Versi%C3%B3n-1.2-brightgreen.svg)]()
+[![License](https://img.shields.io/badge/Licencia-Libre%20Acceso-orange.svg)]()
 
-Esta aplicación te permite visualizar canales de televisión en vivo (IPTV) organizados por países, con un fuerte enfoque en el rendimiento, la facilidad de uso y la integración con el ecosistema móvil.
+**Chari-IPTV Cel** es la edición de alto rendimiento diseñada específicamente para teléfonos inteligentes y tabletas Android del ecosistema [Chari-IPTV](https://github.com/RiderCalcina/Chari-IPTV).
 
-## 🚀 Características Principales
+Esta aplicación te permite sintonizar canales de televisión abierta en español de todo el mundo y disfrutar de la filmografía completa de Studio Ghibli, combinando una interfaz táctil moderna (Material 3) con un motor de reproducción multimedia de nivel profesional.
 
-*   **Arquitectura Moderna:** Desarrollada 100% en Kotlin con Jetpack Compose y Clean Architecture.
-*   **Google Cast (Chromecast):** Transmite cualquier canal directamente a tu Smart TV o dispositivo Chromecast con un solo toque.
-*   **Rotación Dinámica e Inteligente:** Navega el catálogo cómodamente en formato vertical u horizontal. Al reproducir un video en el dispositivo, la pantalla pasa automáticamente a modo apaisado (Landscape) para una experiencia inmersiva.
-*   **UI Optimizada para Móviles:** Diseño táctil fluido basado en Material Design 3, eliminando los bordes y controles engorrosos de la versión de TV.
-*   **Noticias RSS Integradas:** Mantente informado con un feed de noticias que se desliza sutilmente en la cabecera de la app de forma minimalista.
-*   **Gestión de Favoritos:** Mantén presionado cualquier canal para guardarlo en tu lista de favoritos y acceder a él rápidamente.
+---
 
-## 📺 Diferencias Clave: Chary-IPTV (Móvil) vs Chari-IPTV (Android TV)
+## 🚀 Novedades y Características de la Versión 1.2
 
-Ambas aplicaciones comparten la misma poderosa lógica interna (uso de Room, Hilt, Corrutinas, y Repositorios), pero están optimizadas para experiencias completamente distintas:
+### 1. 🎋 Filmografía Completa de Studio Ghibli (1984–2023)
+* **25 Películas en Orden Cronológico:** Catálogo histórico íntegro desde *Nausicaä del Valle del Viento* (1984) hasta *El chico y la garza* (2023).
+* **Fuentes Duales:** Enlaces primarios y espejos de respaldo públicos (BitChute + Internet Archive).
+* **Reanudación Automática de Reproducción:** Si sales a mitad de una película, la app te preguntará si deseas continuar exactamente donde lo dejaste (`ResumePlaybackDialog`) con guardado persistente de posición (`GhibliPlaybackStore`).
+* **Fichas Cinematográficas:** Pósters con proporción cinematográfica (2:3), año de estreno y número cronológico.
 
-| Característica | Chary-IPTV (Esta versión - Móvil) | Chari-IPTV (Versión Android TV) |
-| :--- | :--- | :--- |
-| **Navegación** | 100% táctil (Gestos, Taps, Scroll libre). | D-Pad (Control remoto direccional). |
-| **Librerías UI** | `androidx.compose.material3` estándar. | `androidx.tv.material3` (enfocada a Leanback). |
-| **Reproducción** | Rotación dinámica (horizontal automático) o transmisión vía Google Cast. | Siempre a pantalla completa (Full Screen TV). |
-| **Google Cast** | Soportado e integrado nativamente. | No necesario (La TV es el receptor). |
-| **Cabecera** | Fila ultra delgada con cinta de noticias RSS. | Menú lateral / Cabecera tradicional para TV. |
-| **Manifest** | Requiere soporte Touch y pantallas móviles. | Requiere Leanback y bloquea la orientación. |
+### 2. 👆 Gestos Táctiles en Pantalla
+El reproductor nativo integra controles táctiles intuitivos que evitan tener que pausar o buscar botones diminutos:
+* **Brillo de Pantalla:** Desliza verticalmente en la mitad izquierda de la pantalla para aumentar o atenuar el brillo.
+* **Volumen Multimedia:** Desliza verticalmente en la mitad derecha de la pantalla para subir o bajar el volumen.
+* **Salto Rápido:** Doble toque en el lado izquierdo para retroceder 10 segundos, o en el lado derecho para adelantar 10 segundos.
+* **Alternar Controles:** Un solo toque en cualquier parte de la pantalla oculta o muestra el HUD interactivo.
 
-## 🛠️ Tecnologías Utilizadas
+### 3. 🔄 Rotación 100% Controlada por Sensor Físico
+* La reproducción inicia de forma natural y estable en la orientación en que sostengas tu equipo.
+* La pantalla **únicamente girará cuando tú voltees físicamente el celular**, eliminando saltos bruscos o temporizadores molestos.
 
-*   **Kotlin**
-*   **Jetpack Compose** (Material 3)
-*   **Media3 (ExoPlayer)** para reproducción de video HLS
-*   **Google Cast SDK** para transmisión a TV
-*   **Dagger Hilt** para Inyección de Dependencias
-*   **Room** para Base de Datos local (Favoritos y Caché)
-*   **Retrofit & OkHttp** para peticiones de red
-*   **Coil** para carga de imágenes asíncrona
+### 4. 🌟 Sección "Importante" y Donaciones
+* Acceso directo mediante una insignia destacada con borde ámbar y brillo dorado en la barra superior.
+* **Códigos QR Verticales:** Códigos QR en alta resolución dispuestos de forma vertical, adaptados a la lectura cómoda en celulares con su respectiva leyenda explicativa:
+  * 💳 **PayPal:** Donaciones voluntarias internacionales con tarjeta de crédito, débito o saldo.
+  * 📱 **Yape (Perú / BCP):** Transferencias directas en moneda local.
+  * 🌐 **Sitio Web Oficial:** Enlace y QR hacia [www.qwertyaserty.com](https://qwertyaserty.com) para actualizaciones y soporte.
+* Cuadro de aviso legal, autoría y exención de responsabilidad transparente.
 
-## 📦 Instalación y Compilación
+### 5. ⭐ Gestión Rápida de Favoritos
+* Identificación con **estrella dorada (`⭐`)** al estilo de la versión de televisión.
+* Mantén presionado cualquier canal o película para añadirlo o quitarlo de tus favoritos al instante.
 
-1.  Clona el repositorio: `git clone https://github.com/RiderCalcina/Chary-IPTV.git`
-2.  Abre el proyecto en Android Studio.
-3.  Sincroniza los archivos de Gradle.
-4.  Ejecuta la aplicación en un emulador o dispositivo físico Android (`assembleDebug`).
+### 6. 📺 Google Cast & Picture-in-Picture (PiP)
+* **Chromecast Integrado:** Transmite cualquier canal o película a tu Smart TV con un solo toque desde el botón de transmisión.
+* **Modo PiP:** Continúa escuchando o viendo la transmisión en una ventana flotante mientras usas WhatsApp, navegas en internet o revisas otras aplicaciones.
+
+### 7. ⚡ Arquitectura de Alto Rendimiento
+* **Multi-Proveedor Asíncrono:** Conexión modular con `IptvOrgProvider` (enfoque en transmisiones hispanohablantes), `TdtChannelsProvider`, `PlutoTvProvider` y `AniVodProvider`. Cero bloqueos en el hilo principal.
+* **Room Database v13:** Caché persistente local con vigencia inteligente de 4 horas (TTL).
+* **Dual OkHttp + DoH:** Resolución DNS sobre HTTPS (Cloudflare + Google DNS) inmune a bloqueos por proveedores de internet.
+* **Decodificador Jellyfin FFmpeg:** Soporte para transmisiones con pistas de audio complejas o códecs de TV digital.
+* **Proxy Local Anti-SSRF:** Servidor interno en loopback (puerto 8899) para inyección de cabeceras seguras y recuperación ante caídas de señal.
+
+---
+
+## 📋 Estructura de Navegación
+
+Las pestañas superiores se encuentran organizadas en el siguiente orden:
+
+1. **🌟 Importante** *(Modal de donaciones y soporte con códigos QR)*
+2. **⭐ Favoritos** *(Acceso rápido a tus canales preferidos guardados en el móvil)*
+3. **🌎 Países** *(Filtro por países hispanohablantes con selector de banderas)*
+4. **⚽ Deportes** *(Fútbol, transmisiones deportivas en vivo)*
+5. **📰 Noticias** *(Canales informativos nacionales e internacionales)*
+6. **🎬 Películas** *(Canales dedicados al cine)*
+7. **📺 Series** *(Telenovelas, drama y comedia)*
+8. **👶 Infantil** *(Animación y programación para niños)*
+9. **🎵 Música** *(Canales musicales y de videoclips)*
+10. **🎋 Studio Ghibli** *(Filmografía completa 1984–2023)*
+
+---
+
+## 🛠️ Tecnologías y Librerías
+
+* **Lenguaje:** Kotlin 1.9+
+* **Interfaz de Usuario:** Jetpack Compose (BOM 2024+) con Material Design 3
+* **Reproductor:** Media3 ExoPlayer 1.9.0 + Jellyfin FFmpeg Audio Extension (`1.9.0+1`)
+* **Inyección de Dependencias:** Dagger Hilt 2.51
+* **Base de Datos Local:** AndroidX Room v13 (KSP)
+* **Red:** OkHttp 4.12.0 con DnsOverHttps
+* **Carga de Imágenes:** Coil 2.7.0 (Soporte PNG, WEBP y SVG)
+* **Transmisión:** Google Cast Framework SDK
+* **Optimización:** R8 / ProGuard (`isMinifyEnabled = true`, `isShrinkResources = true`)
+
+---
+
+## 📦 Compilación y Generación del APK
+
+### Requisitos
+* JDK 17
+* Android SDK 36 (Android 15 / 16 Preview)
+* Android Studio Ladybug / Koala o superior
+
+### Pasos de Compilación
+
+1. Clonar el repositorio:
+```bash
+git clone https://github.com/RiderCalcina/Chary-IPTV.git
+cd Chary-IPTV
+```
+
+2. Compilar el APK Release optimizado:
+```bash
+./gradlew :app:assembleRelease
+```
+
+3. El APK final se generará en:
+```text
+app/build/outputs/apk/release/Chari-IPTV_Cel_1.2.apk
+```
+
+---
+
+## ⚖️ Aviso Legal y Exención de Responsabilidad
+
+* **Naturaleza del Software:** Chari-IPTV Cel es un reproductor multimedia cliente de libre acceso. No almacena, gestiona, transmite ni retransmite señales o contenidos en servidores propios.
+* **Señales de Televisión:** Todos los enlaces IPTV proceden de listas e índices abiertos de dominio público en internet (`iptv-org`, `TDTChannels`). El desarrollador no tiene vinculación con las emisiones ni garantiza su disponibilidad continua.
+* **Catálogo Studio Ghibli:** El apartado indexa enlaces de preservación cultural pública alojados en Internet Archive (`archive.org`). Ningún archivo de video reside en los servidores del desarrollador.
+* **Propiedad Intelectual:** Todas las marcas, logotipos, producciones y señales pertenecen a sus respectivos autores, cadenas televisivas y a Studio Ghibli Inc.

@@ -1,17 +1,24 @@
+# Archivos y carpetas de entorno IDE
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+.idea/
+.gradle/
+.kotlin/
 .DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+
+# Archivos locales de compilación y claves
 local.properties
+/local.properties
+release.keystore
+
+# Salidas de compilación
+build/
+/build
+*/build/
+captures/
+/captures
+.externalNativeBuild/
+.cxx/
+
+# Logs y volcados de memoria
 *.hprof
 logcat.txt
