@@ -11,16 +11,35 @@ android {
     namespace = "com.example.chariiptv"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.example.charyiptv"
+        applicationId = "com.qwertyaserty.chariiptv"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.2"
+    }
+
+    signingConfigs {
+        create("release") {
+            val keystoreFile = project.rootProject.file("release.keystore")
+            if (keystoreFile.exists()) {
+                storeFile = keystoreFile
+                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "android"
+                keyAlias = System.getenv("KEY_ALIAS") ?: "chariiptv"
+                keyPassword = System.getenv("KEY_PASSWORD") ?: "android"
+            }
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            val releaseKeystore = project.rootProject.file("release.keystore")
+            signingConfig = if (releaseKeystore.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -39,6 +58,16 @@ android {
       resources {
         excludes += "/META-INF/{AL2.0,LGPL2.1}"
       }
+    }
+
+    applicationVariants.all {
+        val variant = this
+        outputs.all {
+            val output = this as? com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            if (variant.buildType.name == "release") {
+                output?.outputFileName = "Chari-IPTV_Cel_1.2.apk"
+            }
+        }
     }
 }
 
@@ -64,41 +93,41 @@ dependencies {
   implementation(libs.androidx.compose.ui)
   implementation(libs.androidx.compose.ui.tooling.preview)
   implementation(libs.androidx.compose.material3)
+  implementation("androidx.compose.material:material-icons-extended")
+  
   // Tooling
   debugImplementation(libs.androidx.compose.ui.tooling)
-  // Instrumented tests
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-  // Local tests: jUnit, coroutines, Android runner
+  // Local tests
   testImplementation(libs.junit)
   testImplementation(libs.kotlinx.coroutines.test)
-
-  // Instrumented tests: jUnit rules and runners
   androidTestImplementation(libs.androidx.test.core)
   androidTestImplementation(libs.androidx.test.ext.junit)
   androidTestImplementation(libs.androidx.test.runner)
   androidTestImplementation(libs.androidx.test.espresso.core)
 
-  // Navigation
-  implementation(libs.androidx.navigation3.ui)
-  implementation(libs.androidx.navigation3.runtime)
-  implementation(libs.androidx.lifecycle.viewmodel.navigation3)
-  
-  // Custom Chary-IPTV Dependencies
+  // OkHttp & DoH
   implementation("com.squareup.okhttp3:okhttp:4.12.0")
-  implementation("androidx.media3:media3-exoplayer:1.2.0")
-  implementation("androidx.media3:media3-exoplayer-hls:1.2.0")
-  implementation("androidx.media3:media3-ui:1.2.0")
+  implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:4.12.0")
+
+  // Media3 & FFmpeg Audio Decoder
+  val media3Version = "1.9.0"
+  implementation("androidx.media3:media3-exoplayer:$media3Version")
+  implementation("androidx.media3:media3-exoplayer-hls:$media3Version")
+  implementation("androidx.media3:media3-exoplayer-dash:$media3Version")
+  implementation("androidx.media3:media3-datasource-okhttp:$media3Version")
+  implementation("androidx.media3:media3-ui:$media3Version")
+  implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1")
+
+  // Coil
   implementation("io.coil-kt:coil-compose:2.6.0")
-  
+  implementation("io.coil-kt:coil-svg:2.6.0")
+
   // Google Cast
   implementation("com.google.android.gms:play-services-cast-framework:21.4.0")
   implementation("androidx.mediarouter:mediarouter:1.7.0")
-
-  // Retrofit
-  implementation("com.squareup.retrofit2:retrofit:2.11.0")
-  implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
   // Room
   val room_version = "2.6.1"
