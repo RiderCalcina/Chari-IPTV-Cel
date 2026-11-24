@@ -179,7 +179,10 @@ fun MobileTopBar(
                     maxLines = 1,
                     modifier = Modifier
                         .weight(1f)
-                        .basicMarquee()
+                        .basicMarquee(
+                            iterations = Int.MAX_VALUE,
+                            velocity = 28.dp
+                        )
                 )
             }
         }
