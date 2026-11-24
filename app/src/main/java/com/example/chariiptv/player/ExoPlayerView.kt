@@ -21,8 +21,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -395,7 +396,7 @@ fun ExoPlayerView(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = onClose) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = Color.White)
                     }
 
                     Column(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
@@ -432,12 +433,12 @@ fun ExoPlayerView(
                         Icon(Icons.Filled.PictureInPictureAlt, contentDescription = "PiP", tint = Color.White)
                     }
 
-                    // Botón de Favoritos
+                    // Botón de Favoritos (Estrella dorada)
                     IconButton(onClick = onToggleFavorite) {
                         Icon(
-                            imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                            imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
                             contentDescription = "Favorito",
-                            tint = if (isFavorite) Color(0xFFEF4444) else Color.White
+                            tint = if (isFavorite) Color(0xFFFFD700) else Color.White
                         )
                     }
                 }

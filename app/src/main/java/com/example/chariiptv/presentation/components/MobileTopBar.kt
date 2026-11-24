@@ -1,8 +1,10 @@
 package com.example.chariiptv.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -30,10 +32,16 @@ import com.example.chariiptv.theme.MobileSurfaceFocused
 import com.example.chariiptv.util.Constants
 import com.google.android.gms.cast.framework.CastButtonFactory
 
-private data class NavCategory(val id: String, val name: String, val icon: String)
+private data class NavCategory(
+    val id: String,
+    val name: String,
+    val icon: String,
+    val isSpecial: Boolean = false
+)
 
 private val NAV_CATEGORIES = listOf(
-    NavCategory("important", "Importante", "ℹ️"),
+    NavCategory("important", "Importante", "🌟", isSpecial = true),
+    NavCategory("countries", "Países", "🌎"),
     NavCategory("fav", "Favoritos", "⭐"),
     NavCategory("sports", "Deportes", "⚽"),
     NavCategory("news", "Noticias", "📰"),
@@ -41,8 +49,7 @@ private val NAV_CATEGORIES = listOf(
     NavCategory("series", "Series", "📺"),
     NavCategory("animation", "Infantil", "👶"),
     NavCategory("music", "Música", "🎵"),
-    NavCategory("ghibli", "Studio Ghibli", "🎋"),
-    NavCategory("countries", "Países", "🌎")
+    NavCategory("ghibli", "Studio Ghibli", "🎋")
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -207,12 +214,30 @@ fun MobileTopBar(
                         }
                     },
                     text = {
-                        Text(
-                            text = "${cat.icon} ${cat.name}",
-                            color = if (isSelected) MobilePrimary else Color.LightGray,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            fontSize = 13.sp
-                        )
+                        if (cat.isSpecial) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0x33F59E0B))
+                                    .border(BorderStroke(1.5.dp, Color(0xFFF59E0B)), RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 10.dp, vertical = 5.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "🌟 Importante",
+                                    color = Color(0xFFFBBF24),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        } else {
+                            Text(
+                                text = "${cat.icon} ${cat.name}",
+                                color = if (isSelected) MobilePrimary else Color.LightGray,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 13.sp
+                            )
+                        }
                     }
                 )
             }

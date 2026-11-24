@@ -241,8 +241,15 @@ class MainActivity : FragmentActivity() {
                         if (uiState.currentChannel != null) {
                             val activeChannel = uiState.currentChannel!!
 
-                            DisposableEffect(Unit) {
+                            LaunchedEffect(Unit) {
+                                // Iniciar y mantenerse horizontal al reproducir
                                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                                delay(1200)
+                                // Permitir rotación libre (horizontal o vertical) si el usuario gira el móvil
+                                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
+                            }
+
+                            DisposableEffect(Unit) {
                                 onDispose {
                                     requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                                 }

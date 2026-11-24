@@ -6,8 +6,8 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -96,7 +96,7 @@ fun MobileChannelCard(
                 )
             }
 
-            // Indicador de Favorito
+            // Indicador de Favorito (Estrella dorada)
             IconButton(
                 onClick = onLongClick,
                 modifier = Modifier
@@ -105,10 +105,10 @@ fun MobileChannelCard(
                     .padding(4.dp)
             ) {
                 Icon(
-                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                    imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
                     contentDescription = "Favorito",
-                    tint = if (isFavorite) Color(0xFFEF4444) else Color.LightGray.copy(alpha = 0.5f),
-                    modifier = Modifier.size(16.dp)
+                    tint = if (isFavorite) Color(0xFFFFD700) else Color.LightGray.copy(alpha = 0.5f),
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }
@@ -194,7 +194,7 @@ fun MobileGhibliCard(
                 }
             }
 
-            // Badge de favorito
+            // Badge de favorito (Estrella dorada)
             if (isFavorite) {
                 Box(
                     modifier = Modifier
@@ -205,10 +205,10 @@ fun MobileGhibliCard(
                         .padding(4.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Favorite,
+                        imageVector = Icons.Filled.Star,
                         contentDescription = "Favorito",
-                        tint = Color(0xFFEF4444),
-                        modifier = Modifier.size(14.dp)
+                        tint = Color(0xFFFFD700),
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
