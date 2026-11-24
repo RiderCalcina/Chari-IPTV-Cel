@@ -227,9 +227,32 @@ fun ExoPlayerView(
 
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_PAUSE -> player.pause()
-                Lifecycle.Event.ON_RESUME -> player.play()
-                Lifecycle.Event.ON_DESTROY -> player.release()
+                Lifecycle.Event.ON_PAUSE -> {
+                    // Si la actividad entra en Picture-in-Picture (PiP), Android envía ON_PAUSE pero la
+                    // reproducción DEBE continuar activa en la minipantalla flotante.
+                    val inPip = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && activity != null) {
+                        activity.isInPictureInPictureMode
+                    } else false
+                    if (!inPip) {
+                        player.pause()
+                    }
+                }
+                Lifecycle.Event.ON_STOP -> {
+                    val inPip = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && activity != null) {
+                        activity.isInPictureInPictureMode
+                    } else false
+                    if (!inPip) {
+                        player.pause()
+                    }
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    if (!player.isPlaying) {
+                        player.play()
+                    }
+                }
+                Lifecycle.Event.ON_DESTROY -> {
+                    player.release()
+                }
                 else -> {}
             }
         }
@@ -378,9 +401,13 @@ fun ExoPlayerView(
             }
         }
 
+        val inPipMode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && activity != null) {
+            activity.isInPictureInPictureMode
+        } else false
+
         // HUD Interactivo
         AnimatedVisibility(
-            visible = isHudVisible && !isError,
+            visible = isHudVisible && !isError && !inPipMode,
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier.fillMaxSize()
