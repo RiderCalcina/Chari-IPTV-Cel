@@ -1,5 +1,8 @@
 package com.example.chariiptv.player
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.util.Log
 import okhttp3.OkHttpClient
@@ -7,12 +10,13 @@ import okhttp3.Request
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.PrintWriter
+import java.net.Inet4Address
 import java.net.InetAddress
+import java.net.NetworkInterface
 import java.net.ServerSocket
 import java.net.Socket
-import java.util.concurrent.SynchronousQueue
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
+import java.util.Collections
+import java.util.concurrent.Executors
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -28,16 +32,62 @@ class LocalHlsProxyServer @Inject constructor(
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
         private val PRIVATE_IP_REGEX = Regex("^(?:127\\.|10\\.|192\\.168\\.|169\\.254\\.|172\\.(?:1[6-9]|2[0-9]|3[01])\\.)")
 
-        fun getLocalWifiIp(): String? {
+        fun getLocalWifiIp(context: Context? = null): String? {
+            // 1. Si se provee Context, consultar ConnectivityManager para la interfaz Wi-Fi activa
+            if (context != null) {
+                try {
+                    val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+                    cm?.allNetworks?.forEach { net ->
+                        val caps = cm.getNetworkCapabilities(net)
+                        if (caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true ||
+                            caps?.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) == true
+                        ) {
+                            val lp = cm.getLinkProperties(net)
+                            for (la in lp?.linkAddresses ?: emptyList()) {
+                                val addr = la.address
+                                if (addr is Inet4Address && !addr.isLoopbackAddress) {
+                                    val host = addr.hostAddress
+                                    if (!host.isNullOrBlank() && !host.startsWith("127.")) {
+                                        return host
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (_: Exception) {}
+            }
+
+            // 2. Prioridad en interfaces de red Wi-Fi / Ethernet (wlan*, eth*, wifi*)
             try {
-                val interfaces = java.util.Collections.list(java.net.NetworkInterface.getNetworkInterfaces())
+                val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
                 for (intf in interfaces) {
                     if (intf.isLoopback || !intf.isUp) continue
-                    val addrs = java.util.Collections.list(intf.inetAddresses)
+                    val name = intf.name.lowercase()
+                    if (name.startsWith("wlan") || name.startsWith("eth") || name.contains("wifi")) {
+                        val addrs = Collections.list(intf.inetAddresses)
+                        for (addr in addrs) {
+                            if (!addr.isLoopbackAddress && addr is Inet4Address) {
+                                val host = addr.hostAddress
+                                if (!host.isNullOrBlank() && !host.startsWith("127.")) {
+                                    return host
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 3. Fallback: buscar subredes locales (192.168.x.x o 172.x.x.x) descartando redes móviles
+                for (intf in interfaces) {
+                    if (intf.isLoopback || !intf.isUp) continue
+                    val name = intf.name.lowercase()
+                    if (name.startsWith("rmnet") || name.startsWith("ccmni") || name.startsWith("pdp") || name.startsWith("wwan")) {
+                        continue
+                    }
+                    val addrs = Collections.list(intf.inetAddresses)
                     for (addr in addrs) {
-                        if (!addr.isLoopbackAddress && addr is java.net.Inet4Address) {
+                        if (!addr.isLoopbackAddress && addr is Inet4Address) {
                             val host = addr.hostAddress
-                            if (!host.isNullOrBlank() && !host.startsWith("127.")) {
+                            if (!host.isNullOrBlank() && (host.startsWith("192.168.") || host.startsWith("172."))) {
                                 return host
                             }
                         }
@@ -53,16 +103,10 @@ class LocalHlsProxyServer @Inject constructor(
     var port: Int = 0
         private set
 
-    // Pool elástico para TV Boxes: sin rechazo de peticiones (CallerRunsPolicy) y reciclaje a los 30 s
-    private val workerExecutor = ThreadPoolExecutor(
-        2,
-        16,
-        30L,
-        TimeUnit.SECONDS,
-        SynchronousQueue(),
-        { runnable -> Thread(runnable, "hls-proxy-worker").apply { isDaemon = true } },
-        ThreadPoolExecutor.CallerRunsPolicy()
-    )
+    // Pool elástico sin riesgo de bloqueo del hilo de aceptación y sin límite rígido
+    private val workerExecutor = Executors.newCachedThreadPool { runnable ->
+        Thread(runnable, "hls-proxy-worker").apply { isDaemon = true }
+    }
 
     @Volatile
     private var isRunning = false

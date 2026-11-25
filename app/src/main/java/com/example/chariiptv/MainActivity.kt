@@ -344,7 +344,17 @@ class MainActivity : FragmentActivity() {
 
     override fun onStop() {
         super.onStop()
-        // Si no está activamente en modo Picture-in-Picture, detener inmediatamente la reproducción
+        val isCasting = try {
+            CastContext.getSharedInstance(this).sessionManager.currentCastSession?.isConnected == true
+        } catch (_: Exception) { false }
+
+        // Si está transmitiendo a Chromecast en la TV, la transmisión debe continuar en la TV
+        // aunque el usuario bloquee el celular o cambie de aplicación.
+        if (isCasting) {
+            return
+        }
+
+        // Si no está activamente en modo Picture-in-Picture, detener inmediatamente la reproducción local
         // para evitar fugas de audio en segundo plano al salir o minimizar la app
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInPictureInPictureMode) {
             // Permitir continuidad de reproducción en ventana flotante PiP
@@ -486,7 +496,7 @@ fun CastOrLocalPlayerView(
             // en la red Wi-Fi compartida. Esto neutraliza las políticas CORS estrictas (como Pluto TV:
             // 'Access-Control-Allow-Origin: http://pluto.tv') e inyecta Referer / User-Agent correctos
             // garantizando que el receptor Chromecast de la TV cargue los segmentos sin error.
-            val wifiIp = LocalHlsProxyServer.getLocalWifiIp()
+            val wifiIp = LocalHlsProxyServer.getLocalWifiIp(context)
             val effectiveCastUrl = if (!isVod && wifiIp != null && localProxyServer != null) {
                 localProxyServer.buildCastProxyUrl(
                     hostIp = wifiIp,
