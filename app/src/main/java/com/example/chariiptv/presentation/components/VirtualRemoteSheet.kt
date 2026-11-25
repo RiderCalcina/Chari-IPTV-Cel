@@ -405,7 +405,8 @@ fun VirtualRemoteSheet(
                     enabled = !isSyncing && selectedTv != null,
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                 ) {
                     if (isSyncing) {
                         CircularProgressIndicator(modifier = Modifier.size(16.dp), color = MobilePrimary, strokeWidth = 2.dp)
@@ -413,7 +414,12 @@ fun VirtualRemoteSheet(
                         Icon(Icons.Default.Sync, contentDescription = null, tint = Color(0xFFFFD700), modifier = Modifier.size(18.dp))
                     }
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Sincronizar Favs", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "Sincronizar Favoritos",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center
+                    )
                 }
 
                 OutlinedButton(
@@ -421,7 +427,8 @@ fun VirtualRemoteSheet(
                     enabled = selectedTv != null,
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                 ) {
                     Icon(Icons.Default.Keyboard, contentDescription = null, tint = MobilePrimary, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
