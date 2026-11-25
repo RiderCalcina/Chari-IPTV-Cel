@@ -45,12 +45,21 @@ class LanRemoteViewModel @Inject constructor(
     private var statusPollingJob: Job? = null
 
     init {
-        // Auto-seleccionar primer televisor cuando se descubre si no hay ninguno seleccionado
+        // Auto-seleccionar televisor cuando se descubre o actualizar si cambia de IP
         viewModelScope.launch {
             discovery.discoveredTvs.collect { tvs ->
-                if (_selectedTv.value == null && tvs.isNotEmpty()) {
+                val current = _selectedTv.value
+                if (current == null && tvs.isNotEmpty()) {
                     _selectedTv.value = tvs.first()
                     startStatusPolling()
+                } else if (current != null) {
+                    val matching = tvs.find { 
+                        (it.name.isNotBlank() && it.name == current.name) || (it.host == current.host && it.port == current.port)
+                    }
+                    if (matching != null && (matching.host != current.host || matching.port != current.port)) {
+                        _selectedTv.value = matching
+                        refreshTvStatus()
+                    }
                 }
             }
         }
@@ -67,6 +76,7 @@ class LanRemoteViewModel @Inject constructor(
     fun rescan() {
         discovery.stopDiscovery()
         discovery.startDiscovery()
+        discovery.probeSubnetForTvs()
     }
 
     fun selectTv(tv: DiscoveredTv) {
@@ -110,7 +120,10 @@ class LanRemoteViewModel @Inject constructor(
     fun sendKey(key: String) {
         val tv = _selectedTv.value ?: return
         viewModelScope.launch {
-            client.sendRemoteKey(tv, key)
+            val result = client.sendRemoteKey(tv, key)
+            if (result.isFailure) {
+                refreshTvStatus()
+            }
         }
     }
 
@@ -161,7 +174,7 @@ class LanRemoteViewModel @Inject constructor(
         statusPollingJob = viewModelScope.launch {
             while (true) {
                 refreshTvStatus()
-                delay(4000)
+                delay(2500)
             }
         }
     }
@@ -171,6 +184,10 @@ class LanRemoteViewModel @Inject constructor(
         val result = client.getTvStatus(tv)
         if (result.isSuccess) {
             _tvStatus.value = result.getOrNull()
+        } else {
+            _tvStatus.value = null
+            // Si la TV seleccionada no responde, sondear subred para verificar si cambió de IP
+            discovery.probeSubnetForTvs()
         }
     }
 }

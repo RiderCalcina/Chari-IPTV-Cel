@@ -89,11 +89,18 @@ fun VirtualRemoteSheet(
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val isConnected = selectedTv != null && tvStatus != null
                     Box(
                         modifier = Modifier
                             .size(10.dp)
                             .clip(CircleShape)
-                            .background(if (selectedTv != null) Color(0xFF10B981) else Color(0xFFEF4444))
+                            .background(
+                                when {
+                                    isConnected -> Color(0xFF10B981)
+                                    selectedTv != null -> Color(0xFFF59E0B)
+                                    else -> Color(0xFFEF4444)
+                                }
+                            )
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Column(modifier = Modifier.weight(1f)) {
@@ -106,8 +113,12 @@ fun VirtualRemoteSheet(
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
-                            text = if (selectedTv != null) "Conectado por LAN: ${selectedTv.host}:${selectedTv.port}" else "Toca para buscar televisiones",
-                            color = Color.LightGray,
+                            text = when {
+                                isConnected -> "Conectado por LAN: ${selectedTv.host}:${selectedTv.port}"
+                                selectedTv != null -> "Conectando con ${selectedTv.host}:${selectedTv.port}..."
+                                else -> "Toca para buscar televisiones"
+                            },
+                            color = if (isConnected) Color.LightGray else Color(0xFFFCD34D),
                             fontSize = 11.sp
                         )
                     }

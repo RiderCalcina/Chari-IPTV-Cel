@@ -30,10 +30,17 @@ class TvLanClient @Inject constructor() {
     }
 
     private val httpClient = OkHttpClient.Builder()
-        .connectTimeout(5000, TimeUnit.MILLISECONDS)
-        .readTimeout(8000, TimeUnit.MILLISECONDS)
-        .writeTimeout(8000, TimeUnit.MILLISECONDS)
+        .connectTimeout(3000, TimeUnit.MILLISECONDS)
+        .readTimeout(5000, TimeUnit.MILLISECONDS)
+        .writeTimeout(5000, TimeUnit.MILLISECONDS)
         .retryOnConnectionFailure(true)
+        .build()
+
+    // Cliente ultra-rápido para teclas del control remoto (máxima responsividad)
+    private val fastKeyClient = httpClient.newBuilder()
+        .connectTimeout(1200, TimeUnit.MILLISECONDS)
+        .readTimeout(1500, TimeUnit.MILLISECONDS)
+        .writeTimeout(1500, TimeUnit.MILLISECONDS)
         .build()
 
     suspend fun getTvInfo(tv: DiscoveredTv): Result<JSONObject> = withContext(Dispatchers.IO) {
@@ -43,7 +50,7 @@ class TvLanClient @Inject constructor() {
                 .get()
                 .build()
 
-            httpClient.newCall(request).execute().use { response ->
+            fastKeyClient.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
                     val bodyStr = response.body?.string() ?: "{}"
                     Result.success(JSONObject(bodyStr))
@@ -64,7 +71,7 @@ class TvLanClient @Inject constructor() {
                 .get()
                 .build()
 
-            httpClient.newCall(request).execute().use { response ->
+            fastKeyClient.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
                     val json = JSONObject(response.body?.string() ?: "{}")
                     val status = TvStatus(
@@ -104,7 +111,7 @@ class TvLanClient @Inject constructor() {
                 .post(body)
                 .build()
 
-            httpClient.newCall(request).execute().use { response ->
+            fastKeyClient.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
                     Log.i(TAG, "Canal ${channel.name} enviado exitosamente a ${tv.displayName}")
                     Result.success(true)
@@ -131,7 +138,7 @@ class TvLanClient @Inject constructor() {
                 .post(body)
                 .build()
 
-            httpClient.newCall(request).execute().use { response ->
+            fastKeyClient.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
                     Result.success(true)
                 } else {
@@ -156,7 +163,7 @@ class TvLanClient @Inject constructor() {
                 .post(body)
                 .build()
 
-            httpClient.newCall(request).execute().use { response ->
+            fastKeyClient.newCall(request).execute().use { response ->
                 Result.success(response.isSuccessful)
             }
         } catch (e: Exception) {
@@ -177,7 +184,7 @@ class TvLanClient @Inject constructor() {
                 .post(body)
                 .build()
 
-            httpClient.newCall(request).execute().use { response ->
+            fastKeyClient.newCall(request).execute().use { response ->
                 Result.success(response.isSuccessful)
             }
         } catch (e: Exception) {
@@ -201,7 +208,7 @@ class TvLanClient @Inject constructor() {
                 .post(body)
                 .build()
 
-            httpClient.newCall(request).execute().use { response ->
+            fastKeyClient.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
                     val respJson = JSONObject(response.body?.string() ?: "{}")
                     val synced = respJson.optInt("synced", favoriteUrls.size)

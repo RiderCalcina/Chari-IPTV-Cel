@@ -185,7 +185,10 @@ class LanDeviceDiscovery @Inject constructor(
 
     fun addOrUpdateDiscoveredTv(tv: DiscoveredTv) {
         _discoveredTvs.update { currentList ->
-            val index = currentList.indexOfFirst { it.host == tv.host && it.port == tv.port }
+            val index = currentList.indexOfFirst {
+                (it.name.isNotBlank() && tv.name.isNotBlank() && it.name == tv.name) ||
+                (it.host == tv.host && it.port == tv.port)
+            }
             if (index >= 0) {
                 currentList.toMutableList().apply { set(index, tv) }
             } else {
@@ -208,19 +211,25 @@ class LanDeviceDiscovery @Inject constructor(
             // Comprobar IPs comunes y alrededor de la IP local
             val localOctet = localIp.substringAfterLast(".").toIntOrNull() ?: 100
             val candidateOctets = buildList {
-                // IPs típicas de TVs / Boxes (primeras y últimas del rango DHCP)
-                addAll(listOf(2, 3, 4, 5, 10, 15, 20, 25, 50, 100, 150, 156, 160, 200))
+                // Rango DHCP doméstico típico: 2..50
+                for (i in 2..50) add(i)
                 // Octetos contiguos a este teléfono
                 for (offset in -15..15) {
                     val target = localOctet + offset
-                    if (target in 2..254 && !contains(target)) add(target)
+                    if (target in 2..254) add(target)
                 }
+                // IPs fijas altas típicas
+                addAll(listOf(100, 101, 102, 110, 120, 150, 156, 160, 200))
             }.distinct()
 
-            for (octet in candidateOctets) {
+            // Lanzar en paralelo para escanear en menos de 500 ms
+            candidateOctets.forEach { octet ->
                 val targetIp = "$prefix$octet"
-                if (targetIp == localIp) continue
-                checkIpForTvServer(targetIp, DEFAULT_TV_PORT)
+                if (targetIp != localIp) {
+                    launch {
+                        checkIpForTvServer(targetIp, DEFAULT_TV_PORT)
+                    }
+                }
             }
         }
     }
@@ -229,13 +238,32 @@ class LanDeviceDiscovery @Inject constructor(
         try {
             Socket().use { socket ->
                 socket.connect(InetSocketAddress(ip, port), 250)
-                // Si conecta exitosamente, es nuestro servidor de TV
+                // Si conecta exitosamente, intentar obtener nombre y modelo
+                var model = "TV Box / Smart TV"
+                var brand = "Android TV"
+                var name = "Chari-TV-$ip"
+                try {
+                    val url = java.net.URL("http://$ip:$port/api/info")
+                    val conn = url.openConnection() as java.net.HttpURLConnection
+                    conn.connectTimeout = 350
+                    conn.readTimeout = 350
+                    conn.requestMethod = "GET"
+                    if (conn.responseCode == 200) {
+                        val text = conn.inputStream.bufferedReader().readText()
+                        val json = org.json.JSONObject(text)
+                        model = json.optString("model", model)
+                        brand = json.optString("brand", brand)
+                        name = "Chari-TV-${if (model.isNotBlank()) model else ip}"
+                    }
+                    conn.disconnect()
+                } catch (_: Exception) {}
+
                 val tv = DiscoveredTv(
-                    name = "Chari-TV-$ip",
+                    name = name,
                     host = ip,
                     port = port,
-                    model = "TV Box / Smart TV",
-                    brand = "Android TV"
+                    model = model,
+                    brand = brand
                 )
                 addOrUpdateDiscoveredTv(tv)
             }
