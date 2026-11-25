@@ -279,6 +279,7 @@ class MainActivity : FragmentActivity() {
                                                     }
                                                 },
                                                 onPlayOnTv = {
+                                                    viewModel.playChannel(null)
                                                     lanRemoteViewModel.playChannelOnTv(channel) { success ->
                                                         if (success) {
                                                             lanRemoteViewModel.setRemoteSheetVisible(true)
@@ -300,6 +301,7 @@ class MainActivity : FragmentActivity() {
                                                     }
                                                 },
                                                 onPlayOnTv = {
+                                                    viewModel.playChannel(null)
                                                     lanRemoteViewModel.playChannelOnTv(channel) { success ->
                                                         if (success) {
                                                             lanRemoteViewModel.setRemoteSheetVisible(true)
@@ -348,6 +350,7 @@ class MainActivity : FragmentActivity() {
                                     },
                                     onClose = { viewModel.playChannel(null) },
                                     onSendToTv = {
+                                        viewModel.playChannel(null)
                                         lanRemoteViewModel.playChannelOnTv(activeChannel) { success ->
                                             if (success) {
                                                 lanRemoteViewModel.setRemoteSheetVisible(true)

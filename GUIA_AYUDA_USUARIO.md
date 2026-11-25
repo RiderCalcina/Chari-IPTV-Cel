@@ -167,7 +167,7 @@ Cuando tienes instalada la aplicación hermana **Chari-IPTV** en tu Smart TV o T
 
 ### Funciones del Control Remoto Virtual
 1. **Detección Automática mDNS:** El teléfono descubre la TV en segundo plano mediante `_chari-tv._tcp.` en el puerto `8990` sin que tengas que averiguar ni escribir direcciones IP.
-2. **Botón "Enviar a TV":** En cada tarjeta de canal o película verás un botón azul con icono de tele (`📺`). Al pulsarlo, la TV sintoniza la señal de inmediato.
+2. **Botón "Enviar a TV":** En cada tarjeta de canal o película, así como en la barra superior del reproductor local, verás el botón con icono de tele (`📺`). Al pulsarlo, la reproducción y el audio en el celular se detienen de inmediato y la TV sintoniza la señal en pantalla grande, abriendo el control remoto virtual para manejarla.
 3. **Cruceta Direccional D-Pad:** Mueve el foco de la pantalla del televisor en las cuatro direcciones con respuesta táctil y pulsa **OK** para seleccionar.
 4. **Búsqueda Remota ("Buscar en TV"):** Toca el botón de búsqueda para escribir títulos con el teclado táctil de tu móvil; las letras se transmitirán al buscador de la TV al instante y sintonizará la señal directamente.
 5. **Sincronización Bidireccional de Favoritos:** Con un solo toque en **"Sincronizar Favoritos"**, fusiona y mezcla los canales favoritos de ambos dispositivos. Los favoritos que tenías en el celular se guardan en la TV, y los favoritos que tenías en la TV se descargan y guardan en el celular sin perder ninguno. Ambos dispositivos quedan con la misma lista completa y unificada.
