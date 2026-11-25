@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -62,6 +63,8 @@ fun MobileTopBar(
     selectedCountryCode: String,
     onCountrySelected: (String) -> Unit,
     onImportantClick: () -> Unit = {},
+    onOpenRemote: () -> Unit = {},
+    hasDiscoveredTv: Boolean = false,
     rssNews: String,
     modifier: Modifier = Modifier
 ) {
@@ -147,6 +150,29 @@ fun MobileTopBar(
             }
 
             Spacer(modifier = Modifier.width(4.dp))
+
+            // Botón de Control Remoto Virtual LAN para TV
+            IconButton(
+                onClick = onOpenRemote,
+                modifier = Modifier.size(40.dp)
+            ) {
+                BadgedBox(
+                    badge = {
+                        if (hasDiscoveredTv) {
+                            Badge(
+                                containerColor = Color(0xFF10B981),
+                                modifier = Modifier.size(7.dp)
+                            )
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Tv,
+                        contentDescription = "Control Remoto TV",
+                        tint = if (hasDiscoveredTv) MobilePrimary else Color.White
+                    )
+                }
+            }
 
             // Botón de Google Cast
             AndroidView(

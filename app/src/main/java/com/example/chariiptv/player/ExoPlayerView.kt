@@ -76,6 +76,7 @@ fun ExoPlayerView(
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
     onClose: () -> Unit,
+    onSendToTv: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -464,6 +465,13 @@ fun ExoPlayerView(
                         }
                     }) {
                         Icon(Icons.Filled.PictureInPictureAlt, contentDescription = "PiP", tint = Color.White)
+                    }
+
+                    // Botón de Enviar a TV nativa por LAN
+                    if (onSendToTv != null) {
+                        IconButton(onClick = onSendToTv) {
+                            Icon(Icons.Filled.Tv, contentDescription = "Enviar a TV", tint = Color.White)
+                        }
                     }
 
                     // Botón de Google Cast

@@ -64,12 +64,20 @@ import com.google.android.gms.cast.framework.media.RemoteMediaClient
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.delay
+import com.example.chariiptv.remote.LanRemoteViewModel
+import com.example.chariiptv.presentation.components.VirtualRemoteSheet
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
 
     private val viewModel: TvViewModel by viewModels()
+    private val lanRemoteViewModel: LanRemoteViewModel by viewModels()
     private var isPlayingChannel = false
+
+    override fun onStart() {
+        super.onStart()
+        lanRemoteViewModel.startDiscovery()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,10 +94,25 @@ class MainActivity : FragmentActivity() {
             TVDROIDTheme {
                 val uiState by viewModel.uiState.collectAsState()
 
-                isPlayingChannel = (uiState.currentChannel != null)
+                val discoveredTvs by lanRemoteViewModel.discoveredTvs.collectAsState()
+                val selectedTv by lanRemoteViewModel.selectedTv.collectAsState()
+                val isRemoteSheetVisible by lanRemoteViewModel.isRemoteSheetVisible.collectAsState()
+                val isScanning by lanRemoteViewModel.isScanning.collectAsState()
+                val tvStatus by lanRemoteViewModel.tvStatus.collectAsState()
+                val isSyncing by lanRemoteViewModel.isSyncing.collectAsState()
+                val remoteUserMessage by lanRemoteViewModel.userMessage.collectAsState()
 
                 var notificationMessage by remember { mutableStateOf<String?>(null) }
                 var showImportantDialog by remember { mutableStateOf(false) }
+
+                LaunchedEffect(remoteUserMessage) {
+                    if (remoteUserMessage != null) {
+                        notificationMessage = remoteUserMessage
+                        lanRemoteViewModel.clearUserMessage()
+                    }
+                }
+
+                isPlayingChannel = (uiState.currentChannel != null)
 
                 val gridState = rememberLazyGridState()
 
@@ -116,6 +139,8 @@ class MainActivity : FragmentActivity() {
                                 selectedCountryCode = uiState.selectedCountryCode,
                                 onCountrySelected = { viewModel.selectCountry(it) },
                                 onImportantClick = { showImportantDialog = true },
+                                onOpenRemote = { lanRemoteViewModel.setRemoteSheetVisible(true) },
+                                hasDiscoveredTv = discoveredTvs.isNotEmpty(),
                                 rssNews = uiState.rssNews
                             )
                         }
@@ -240,6 +265,13 @@ class MainActivity : FragmentActivity() {
                                                     } else {
                                                         getString(R.string.added_to_favorites)
                                                     }
+                                                },
+                                                onPlayOnTv = {
+                                                    lanRemoteViewModel.playChannelOnTv(channel) { success ->
+                                                        if (success) {
+                                                            lanRemoteViewModel.setRemoteSheetVisible(true)
+                                                        }
+                                                    }
                                                 }
                                             )
                                         } else {
@@ -253,6 +285,13 @@ class MainActivity : FragmentActivity() {
                                                         getString(R.string.removed_from_favorites)
                                                     } else {
                                                         getString(R.string.added_to_favorites)
+                                                    }
+                                                },
+                                                onPlayOnTv = {
+                                                    lanRemoteViewModel.playChannelOnTv(channel) { success ->
+                                                        if (success) {
+                                                            lanRemoteViewModel.setRemoteSheetVisible(true)
+                                                        }
                                                     }
                                                 }
                                             )
@@ -295,9 +334,34 @@ class MainActivity : FragmentActivity() {
                                             getString(R.string.added_to_favorites)
                                         }
                                     },
-                                    onClose = { viewModel.playChannel(null) }
+                                    onClose = { viewModel.playChannel(null) },
+                                    onSendToTv = {
+                                        lanRemoteViewModel.playChannelOnTv(activeChannel) { success ->
+                                            if (success) {
+                                                lanRemoteViewModel.setRemoteSheetVisible(true)
+                                            }
+                                        }
+                                    }
                                 )
                             }
+                        }
+
+                        // Panel de Control Remoto Virtual LAN
+                        if (isRemoteSheetVisible) {
+                            VirtualRemoteSheet(
+                                selectedTv = selectedTv,
+                                discoveredTvs = discoveredTvs,
+                                isScanning = isScanning,
+                                tvStatus = tvStatus,
+                                isSyncing = isSyncing,
+                                onSelectTv = { lanRemoteViewModel.selectTv(it) },
+                                onRescan = { lanRemoteViewModel.rescan() },
+                                onSendKey = { lanRemoteViewModel.sendKey(it) },
+                                onStopPlayback = { lanRemoteViewModel.stopTvPlayback() },
+                                onSyncFavorites = { lanRemoteViewModel.syncFavoritesToTv() },
+                                onSendSearchText = { lanRemoteViewModel.sendSearchText(it) },
+                                onDismiss = { lanRemoteViewModel.setRemoteSheetVisible(false) }
+                            )
                         }
 
                         // Diálogo modal "Importante" (Donaciones PayPal, Yape y Web Oficial)
@@ -344,6 +408,7 @@ class MainActivity : FragmentActivity() {
 
     override fun onStop() {
         super.onStop()
+        lanRemoteViewModel.stopDiscovery()
         val isCasting = try {
             CastContext.getSharedInstance(this).sessionManager.currentCastSession?.isConnected == true
         } catch (_: Exception) { false }
@@ -382,7 +447,8 @@ fun CastOrLocalPlayerView(
     channel: Channel,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onSendToTv: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val localProxyServer = remember(context) {
@@ -761,7 +827,8 @@ fun CastOrLocalPlayerView(
             channel = channel,
             isFavorite = isFavorite,
             onToggleFavorite = onToggleFavorite,
-            onClose = onClose
+            onClose = onClose,
+            onSendToTv = onSendToTv
         )
     }
 }

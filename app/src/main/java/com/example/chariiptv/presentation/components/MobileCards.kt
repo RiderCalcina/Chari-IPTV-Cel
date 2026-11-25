@@ -2,11 +2,13 @@ package com.example.chariiptv.presentation.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -36,6 +38,7 @@ fun MobileChannelCard(
     isFavorite: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
+    onPlayOnTv: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -111,6 +114,24 @@ fun MobileChannelCard(
                     modifier = Modifier.size(18.dp)
                 )
             }
+
+            // Botón de Enviar directamente a la TV
+            if (onPlayOnTv != null) {
+                IconButton(
+                    onClick = onPlayOnTv,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .size(32.dp)
+                        .padding(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Tv,
+                        contentDescription = "Enviar a TV",
+                        tint = Color.LightGray.copy(alpha = 0.6f),
+                        modifier = Modifier.size(17.dp)
+                    )
+                }
+            }
         }
     }
 }
@@ -122,6 +143,7 @@ fun MobileGhibliCard(
     isFavorite: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
+    onPlayOnTv: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val movieInfo = GhibliData.getMovieInfo(channel.name)
@@ -208,6 +230,26 @@ fun MobileGhibliCard(
                         imageVector = Icons.Filled.Star,
                         contentDescription = "Favorito",
                         tint = Color(0xFFFFD700),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+
+            // Botón de Enviar a TV (Ghibli)
+            if (onPlayOnTv != null) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(6.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0x99000000))
+                        .clickable { onPlayOnTv() }
+                        .padding(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Tv,
+                        contentDescription = "Enviar a TV",
+                        tint = Color.White,
                         modifier = Modifier.size(16.dp)
                     )
                 }
