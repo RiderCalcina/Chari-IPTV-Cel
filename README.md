@@ -127,7 +127,7 @@ app/build/outputs/apk/release/Chari-IPTV_Cel_1.2.apk
 ## 📖 Documentación y Guías
 
 * 📘 **[Guía de Ayuda Completa y Manual de Usuario](file:///C:/xampp/htdocs/Chari-IPTV_Cel/GUIA_AYUDA_USUARIO.md):** Manual detallado paso a paso sobre cómo usar la aplicación móvil, cómo utilizar el control remoto virtual, cómo transmitir por Google Cast tradicional, cómo sincronizar favoritos y cómo resolver problemas de red local.
-* 📡 **[Plan de Arquitectura LAN](file:///C:/xampp/htdocs/Chari-IPTV_Cel/PLAN_IMPLEMENTACION_CONTROL_REMOTO_LAN.md):** Especificación técnica del protocolo de comunicación P2P entre celular y TV.
+* 📺 **[Repositorio Chari-IPTV Smart TV](https://github.com/RiderCalcina/Chari-IPTV):** Código fuente, arquitectura del servidor micro-HTTP y guía de la versión para televisores.
 
 ---
 
