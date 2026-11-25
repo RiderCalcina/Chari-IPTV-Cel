@@ -170,7 +170,7 @@ Cuando tienes instalada la aplicación hermana **Chari-IPTV** en tu Smart TV o T
 2. **Botón "Enviar a TV":** En cada tarjeta de canal o película verás un botón azul con icono de tele (`📺`). Al pulsarlo, la TV sintoniza la señal de inmediato.
 3. **Cruceta Direccional D-Pad:** Mueve el foco de la pantalla del televisor en las cuatro direcciones con respuesta táctil y pulsa **OK** para seleccionar.
 4. **Teclado Remoto ("Escribir en TV"):** Toca el botón del teclado para escribir títulos con el teclado táctil de tu móvil; las letras se transmitirán al buscador de la TV al instante.
-5. **Sincronización de Favoritos:** Con un solo toque, transfiere todos los canales marcados como favoritos en tu celular hacia la base de datos de la televisión.
+5. **Sincronización Bidireccional de Favoritos:** Con un solo toque, fusiona y mezcla los canales favoritos de ambos dispositivos. Los favoritos que tenías en el celular se guardan en la TV, y los favoritos que tenías en la TV se descargan y guardan en el celular sin perder ninguno. Ambos dispositivos quedan con la misma lista completa y unificada.
 
 ---
 

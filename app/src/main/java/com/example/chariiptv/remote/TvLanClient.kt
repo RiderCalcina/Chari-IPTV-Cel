@@ -1,6 +1,7 @@
 package com.example.chariiptv.remote
 
 import android.util.Log
+import com.example.chariiptv.data.local.FavoriteChannel
 import com.example.chariiptv.domain.Channel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -192,10 +193,18 @@ class TvLanClient @Inject constructor() {
         }
     }
 
-    suspend fun syncFavorites(tv: DiscoveredTv, favoriteUrls: List<String>): Result<Int> = withContext(Dispatchers.IO) {
+    suspend fun syncFavorites(tv: DiscoveredTv, phoneFavorites: List<Channel>): Result<List<FavoriteChannel>> = withContext(Dispatchers.IO) {
         try {
             val jsonArray = JSONArray()
-            favoriteUrls.forEach { jsonArray.put(it) }
+            phoneFavorites.forEach { ch ->
+                jsonArray.put(JSONObject().apply {
+                    put("url", ch.url)
+                    put("name", ch.name)
+                    put("logo", ch.logo)
+                    put("referer", ch.referer)
+                    put("userAgent", ch.userAgent)
+                })
+            }
 
             val payload = JSONObject().apply {
                 put("action", "SYNC_FAVORITES")
@@ -208,11 +217,30 @@ class TvLanClient @Inject constructor() {
                 .post(body)
                 .build()
 
-            fastKeyClient.newCall(request).execute().use { response ->
+            httpClient.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
                     val respJson = JSONObject(response.body?.string() ?: "{}")
-                    val synced = respJson.optInt("synced", favoriteUrls.size)
-                    Result.success(synced)
+                    val favsArray = respJson.optJSONArray("favorites") ?: JSONArray()
+                    val mergedList = ArrayList<FavoriteChannel>(favsArray.length())
+                    for (i in 0 until favsArray.length()) {
+                        val item = favsArray.optJSONObject(i)
+                        if (item != null) {
+                            val url = item.optString("url", "")
+                            if (url.isNotBlank()) {
+                                mergedList.add(
+                                    FavoriteChannel(
+                                        url = url,
+                                        name = item.optString("name", ""),
+                                        logo = item.optString("logo", ""),
+                                        referer = item.optString("referer", ""),
+                                        userAgent = item.optString("userAgent", ""),
+                                        alternateSourcesJson = item.optString("alternateSourcesJson", "")
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    Result.success(mergedList)
                 } else {
                     Result.failure(Exception("HTTP error ${response.code}"))
                 }

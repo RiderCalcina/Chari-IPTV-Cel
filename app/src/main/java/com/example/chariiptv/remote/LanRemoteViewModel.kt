@@ -1,6 +1,7 @@
 package com.example.chariiptv.remote
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chariiptv.domain.Channel
@@ -145,19 +146,27 @@ class LanRemoteViewModel @Inject constructor(
 
     fun syncFavoritesToTv() {
         val tv = _selectedTv.value ?: return
+        Log.i("LanRemoteViewModel", "syncFavoritesToTv() invocado para ${tv.displayName} (${tv.baseUrl})")
         viewModelScope.launch {
             _isSyncing.value = true
             try {
+                // 1. Obtener favoritos locales del celular
                 val favChannels = repository.getFavoriteChannels()
-                val favUrls = favChannels.map { it.url }
-                val result = client.syncFavorites(tv, favUrls)
+                Log.i("LanRemoteViewModel", "Favoritos locales en celular: ${favChannels.size}")
+                // 2. Intercambio bidireccional con la TV
+                val result = client.syncFavorites(tv, favChannels)
                 if (result.isSuccess) {
-                    val count = result.getOrDefault(favUrls.size)
-                    _userMessage.value = "¡$count favoritos sincronizados con ${tv.displayName}!"
+                    val mergedList = result.getOrNull() ?: emptyList()
+                    Log.i("LanRemoteViewModel", "Fusión exitosa con TV: ${mergedList.size} favoritos devueltos")
+                    // 3. Guardar en el celular la lista fusionada proveniente de la TV
+                    repository.syncFavorites(mergedList)
+                    _userMessage.value = "¡Favoritos mezclados! ${mergedList.size} canales activos en Celular y TV"
                 } else {
+                    Log.e("LanRemoteViewModel", "Fallo al sincronizar: ${result.exceptionOrNull()?.message}")
                     _userMessage.value = "Error al sincronizar favoritos con la TV"
                 }
             } catch (e: Exception) {
+                Log.e("LanRemoteViewModel", "Excepción en syncFavoritesToTv", e)
                 _userMessage.value = "Error: ${e.message}"
             } finally {
                 _isSyncing.value = false

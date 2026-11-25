@@ -80,6 +80,12 @@ class ChannelRepository @Inject constructor(
         return@withContext favEntities.map { it.toDomainChannel() }
     }
 
+    suspend fun syncFavorites(favorites: List<FavoriteChannel>) = withContext(Dispatchers.IO) {
+        for (fav in favorites) {
+            favoriteDao.insertFavorite(fav)
+        }
+    }
+
     suspend fun getFavoriteChannels(urls: List<String>): List<Channel> = getFavoriteChannels()
 
     suspend fun getChannelsByCountry(countryCode: String, forceRefresh: Boolean = false): List<Channel> = withContext(Dispatchers.IO) {
