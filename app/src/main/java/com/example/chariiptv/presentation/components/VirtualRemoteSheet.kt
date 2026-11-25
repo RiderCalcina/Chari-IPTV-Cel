@@ -430,22 +430,22 @@ fun VirtualRemoteSheet(
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                 ) {
-                    Icon(Icons.Default.Keyboard, contentDescription = null, tint = MobilePrimary, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Search, contentDescription = null, tint = MobilePrimary, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Escribir en TV", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Buscar en TV", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
                 }
             }
         }
     }
 
-    // Diálogo para enviar texto escrito con el teclado del celular a la TV
+    // Diálogo para buscar canales/películas desde el celular en la TV
     if (showSearchDialog) {
         AlertDialog(
             onDismissRequest = { showSearchDialog = false },
-            title = { Text("Escribir en la TV", color = Color.White) },
+            title = { Text("Buscar en la TV", color = Color.White) },
             text = {
                 Column {
-                    Text("El texto ingresado se buscará directamente en la televisión:", color = Color.LightGray, fontSize = 13.sp)
+                    Text("El texto ingresado se buscará y sintonizará directamente en la televisión:", color = Color.LightGray, fontSize = 13.sp)
                     Spacer(modifier = Modifier.height(8.dp))
                     TextField(
                         value = searchText,
@@ -473,7 +473,7 @@ fun VirtualRemoteSheet(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MobilePrimary)
                 ) {
-                    Text("Enviar", color = Color.White)
+                    Text("Buscar en TV", color = Color.White)
                 }
             },
             dismissButton = {

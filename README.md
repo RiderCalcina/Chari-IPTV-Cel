@@ -49,8 +49,9 @@ Convierte tu celular en un mando a distancia interactivo y centro de control par
 * **Insignia de Conexión en Tiempo Real:** El icono de TV (`📺`) en la barra superior muestra un punto verde luminoso cuando una televisión con Chari-IPTV está activa y lista para recibir comandos.
 * **"Enviar a TV" con un Toque:** Cada tarjeta de canal o película (incluido Studio Ghibli) y la barra superior del reproductor incorporan un botón de TV directo para mandar la señal a la pantalla grande sin abrirla en el celular.
 * **Cruceta Táctil D-Pad:** Mando circular ergonómico con respuesta háptica suave, botones de navegación (**Atrás, Inicio, Play/Pausa, Silenciar**), control de volumen de la tele (**Vol - / Vol +**).
-* **Teclado Remoto (Escribir en TV):** Redacta búsquedas directamente desde el teclado táctil de tu móvil para no tener que teclear letra por letra con el mando físico de la tele.
+* **Búsqueda Remota (Buscar en TV):** Redacta búsquedas directamente desde el teclado táctil de tu móvil para sintonizar canales en la tele sin tener que teclear letra por letra con el mando físico.
 * **Sincronización de Favoritos:** Sincroniza en un solo clic la lista completa de tus canales favoritos hacia la base de datos de la televisión.
+* **Búsqueda Global Instantánea:** Motor de búsqueda general en toda la app con apertura automática del teclado y visualización completa del texto sin recortes.
 
 ### 7. 📺 Google Cast Universal (Chromecast) & Picture-in-Picture (PiP)
 * **Coexistencia con Chromecast:** Si tu televisor no tiene instalada la app de TV o usas un Chromecast clásico, el botón oficial de Google Cast sigue disponible para transmitir a cualquier pantalla compatible mediante el receptor web y el proxy local seguro.

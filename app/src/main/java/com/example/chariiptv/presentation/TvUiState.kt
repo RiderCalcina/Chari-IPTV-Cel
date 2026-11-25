@@ -4,6 +4,9 @@ import com.example.chariiptv.domain.Channel
 
 data class TvUiState(
     val channels: List<Channel> = emptyList(),
+    val searchResults: List<Channel> = emptyList(),
+    val isSearching: Boolean = false,
+    val isSearchActive: Boolean = false,
     val favorites: Set<String> = emptySet(),
     val isLoading: Boolean = false,
     val selectedFilterId: String = "fav",
@@ -15,10 +18,9 @@ data class TvUiState(
     val errorMessage: String? = null
 ) {
     val filteredChannels: List<Channel>
-        get() = if (searchQuery.isBlank()) {
-            channels
+        get() = if (isSearchActive && searchQuery.isNotBlank()) {
+            searchResults
         } else {
-            val q = searchQuery.trim().lowercase()
-            channels.filter { it.name.lowercase().contains(q) }
+            channels
         }
 }

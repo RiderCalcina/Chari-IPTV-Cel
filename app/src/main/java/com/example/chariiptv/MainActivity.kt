@@ -121,6 +121,10 @@ class MainActivity : FragmentActivity() {
                     gridState.scrollToItem(0)
                 }
 
+                BackHandler(enabled = uiState.isSearchActive) {
+                    viewModel.setSearchActive(false)
+                }
+
                 LaunchedEffect(notificationMessage) {
                     if (notificationMessage != null) {
                         delay(2000)
@@ -134,6 +138,8 @@ class MainActivity : FragmentActivity() {
                             MobileTopBar(
                                 searchQuery = uiState.searchQuery,
                                 onSearchQueryChange = { viewModel.setSearchQuery(it) },
+                                isSearchActive = uiState.isSearchActive,
+                                onSearchActiveChange = { viewModel.setSearchActive(it) },
                                 selectedFilterId = uiState.selectedFilterId,
                                 onFilterSelected = { viewModel.selectFilter(it) },
                                 selectedCountryCode = uiState.selectedCountryCode,
@@ -169,7 +175,7 @@ class MainActivity : FragmentActivity() {
                         val channels = uiState.filteredChannels
                         val isGhibli = uiState.selectedFilterId == "ghibli"
 
-                        if (uiState.isLoading) {
+                        if (uiState.isLoading || (uiState.isSearchActive && uiState.isSearching && channels.isEmpty())) {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
@@ -178,7 +184,7 @@ class MainActivity : FragmentActivity() {
                                     CircularProgressIndicator(color = MobilePrimary, strokeWidth = 3.dp)
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Text(
-                                        text = "Cargando catálogo...",
+                                        text = if (uiState.isSearchActive) "Buscando en toda la app..." else "Cargando catálogo...",
                                         color = Color.LightGray,
                                         fontSize = 14.sp
                                     )
@@ -194,13 +200,15 @@ class MainActivity : FragmentActivity() {
                                     modifier = Modifier.padding(24.dp)
                                 ) {
                                     Text(
-                                        text = if (uiState.searchQuery.isNotEmpty()) "🔍" else "📺",
+                                        text = if (uiState.isSearchActive) "🔍" else "📺",
                                         fontSize = 48.sp
                                     )
                                     Spacer(modifier = Modifier.height(12.dp))
                                     Text(
-                                        text = if (uiState.searchQuery.isNotEmpty()) {
-                                            "No se encontraron resultados para '${uiState.searchQuery}'"
+                                        text = if (uiState.isSearchActive && uiState.searchQuery.isNotEmpty()) {
+                                            "No se encontraron resultados para '${uiState.searchQuery}' en toda la app."
+                                        } else if (uiState.isSearchActive) {
+                                            "Escribe el nombre de un canal o película para buscar en toda la app."
                                         } else if (uiState.selectedFilterId == "fav") {
                                             "Aún no tienes canales favoritos.\nMantén presionado cualquier canal para añadirlo."
                                         } else {
@@ -225,13 +233,17 @@ class MainActivity : FragmentActivity() {
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "${channels.size} ${if (isGhibli) "obras cinematográficas" else "canales activos"}",
+                                        text = if (uiState.isSearchActive && uiState.searchQuery.isNotEmpty()) {
+                                            "${channels.size} resultados encontrados en toda la app"
+                                        } else {
+                                            "${channels.size} ${if (isGhibli) "obras cinematográficas" else "canales activos"}"
+                                        },
                                         color = Color.Gray,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Medium
                                     )
                                     Spacer(modifier = Modifier.weight(1f))
-                                    if (uiState.selectedFilterId == "countries") {
+                                    if (!uiState.isSearchActive && uiState.selectedFilterId == "countries") {
                                         Text(
                                             text = Constants.COUNTRY_FLAGS[uiState.selectedCountryCode] ?: "",
                                             fontSize = 16.sp

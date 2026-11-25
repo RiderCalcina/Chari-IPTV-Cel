@@ -10,7 +10,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tv
@@ -20,8 +24,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -32,6 +42,7 @@ import com.example.chariiptv.theme.MobileSurface
 import com.example.chariiptv.theme.MobileSurfaceFocused
 import com.example.chariiptv.util.Constants
 import com.google.android.gms.cast.framework.CastButtonFactory
+import kotlinx.coroutines.delay
 
 private data class NavCategory(
     val id: String,
@@ -58,6 +69,8 @@ private val NAV_CATEGORIES = listOf(
 fun MobileTopBar(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
+    isSearchActive: Boolean = false,
+    onSearchActiveChange: (Boolean) -> Unit = {},
     selectedFilterId: String,
     onFilterSelected: (String) -> Unit,
     selectedCountryCode: String,
@@ -68,7 +81,18 @@ fun MobileTopBar(
     rssNews: String,
     modifier: Modifier = Modifier
 ) {
-    var isSearchActive by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(isSearchActive) {
+        if (isSearchActive) {
+            delay(120)
+            try {
+                focusRequester.requestFocus()
+                keyboardController?.show()
+            } catch (_: Exception) {}
+        }
+    }
 
     Column(
         modifier = modifier
@@ -84,38 +108,77 @@ fun MobileTopBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (isSearchActive) {
-                TextField(
+                BasicTextField(
                     value = searchQuery,
                     onValueChange = onSearchQueryChange,
-                    placeholder = { Text("Buscar canal o película...", color = Color.Gray, fontSize = 14.sp) },
-                    singleLine = true,
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MobileSurface,
-                        unfocusedContainerColor = MobileSurface,
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = MobilePrimary,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
-                    shape = RoundedCornerShape(20.dp),
-                    leadingIcon = {
-                        Icon(Icons.Default.Search, contentDescription = "Buscar", tint = MobilePrimary)
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = {
-                            if (searchQuery.isNotEmpty()) {
-                                onSearchQueryChange("")
-                            } else {
-                                isSearchActive = false
-                            }
-                        }) {
-                            Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = Color.LightGray)
-                        }
-                    },
                     modifier = Modifier
                         .weight(1f)
-                        .height(48.dp)
+                        .height(44.dp)
+                        .focusRequester(focusRequester),
+                    singleLine = true,
+                    textStyle = TextStyle(
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Normal
+                    ),
+                    cursorBrush = SolidColor(MobilePrimary),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = {
+                        keyboardController?.hide()
+                    }),
+                    decorationBox = { innerTextField ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(22.dp))
+                                .background(MobileSurface)
+                                .padding(horizontal = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    keyboardController?.hide()
+                                    onSearchActiveChange(false)
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Salir de búsqueda",
+                                    tint = MobilePrimary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Box(
+                                modifier = Modifier.weight(1f),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                if (searchQuery.isEmpty()) {
+                                    Text(
+                                        text = "Buscar en toda la app...",
+                                        color = Color.Gray,
+                                        fontSize = 14.sp,
+                                        maxLines = 1
+                                    )
+                                }
+                                innerTextField()
+                            }
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(
+                                    onClick = { onSearchQueryChange("") },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Limpiar texto",
+                                        tint = Color.LightGray,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 )
             } else {
                 Row(
@@ -144,7 +207,7 @@ fun MobileTopBar(
                     }
                 }
 
-                IconButton(onClick = { isSearchActive = true }) {
+                IconButton(onClick = { onSearchActiveChange(true) }) {
                     Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White)
                 }
             }
@@ -215,94 +278,96 @@ fun MobileTopBar(
             }
         }
 
-        // Fila Desplazable de Categorías
-        val selectedCatIndex = NAV_CATEGORIES.indexOfFirst { it.id == selectedFilterId }.coerceAtLeast(0)
-        ScrollableTabRow(
-            selectedTabIndex = selectedCatIndex,
-            containerColor = MobileBackground,
-            contentColor = Color.White,
-            edgePadding = 12.dp,
-            indicator = { tabPositions ->
-                if (selectedCatIndex < tabPositions.size) {
-                    TabRowDefaults.SecondaryIndicator(
-                        Modifier.tabIndicatorOffset(tabPositions[selectedCatIndex]),
-                        color = MobilePrimary,
-                        height = 3.dp
-                    )
-                }
-            },
-            divider = {}
-        ) {
-            NAV_CATEGORIES.forEachIndexed { index, cat ->
-                val isSelected = cat.id == selectedFilterId
-                Tab(
-                    selected = isSelected,
-                    onClick = {
-                        if (cat.id == "important") {
-                            onImportantClick()
-                        } else {
-                            onFilterSelected(cat.id)
-                        }
-                    },
-                    text = {
-                        if (cat.isSpecial) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0x33F59E0B))
-                                    .border(BorderStroke(1.5.dp, Color(0xFFF59E0B)), RoundedCornerShape(12.dp))
-                                    .padding(horizontal = 10.dp, vertical = 5.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
+        // Fila Desplazable de Categorías (se oculta cuando el usuario está en modo búsqueda global)
+        if (!isSearchActive) {
+            val selectedCatIndex = NAV_CATEGORIES.indexOfFirst { it.id == selectedFilterId }.coerceAtLeast(0)
+            ScrollableTabRow(
+                selectedTabIndex = selectedCatIndex,
+                containerColor = MobileBackground,
+                contentColor = Color.White,
+                edgePadding = 12.dp,
+                indicator = { tabPositions ->
+                    if (selectedCatIndex < tabPositions.size) {
+                        TabRowDefaults.SecondaryIndicator(
+                            Modifier.tabIndicatorOffset(tabPositions[selectedCatIndex]),
+                            color = MobilePrimary,
+                            height = 3.dp
+                        )
+                    }
+                },
+                divider = {}
+            ) {
+                NAV_CATEGORIES.forEachIndexed { index, cat ->
+                    val isSelected = cat.id == selectedFilterId
+                    Tab(
+                        selected = isSelected,
+                        onClick = {
+                            if (cat.id == "important") {
+                                onImportantClick()
+                            } else {
+                                onFilterSelected(cat.id)
+                            }
+                        },
+                        text = {
+                            if (cat.isSpecial) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0x33F59E0B))
+                                        .border(BorderStroke(1.5.dp, Color(0xFFF59E0B)), RoundedCornerShape(12.dp))
+                                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "🌟 Importante",
+                                        color = Color(0xFFFBBF24),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp
+                                    )
+                                }
+                            } else {
                                 Text(
-                                    text = "🌟 Importante",
-                                    color = Color(0xFFFBBF24),
-                                    fontWeight = FontWeight.Bold,
+                                    text = "${cat.icon} ${cat.name}",
+                                    color = if (isSelected) MobilePrimary else Color.LightGray,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                     fontSize = 13.sp
                                 )
                             }
-                        } else {
+                        }
+                    )
+                }
+            }
+
+            // Submenú horizontal si la pestaña es "Países"
+            AnimatedVisibility(visible = selectedFilterId == "countries") {
+                val countryCodes = Constants.SPANISH_COUNTRIES.toList().sorted()
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MobileSurface.copy(alpha = 0.4f))
+                        .padding(vertical = 8.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(countryCodes) { code ->
+                        val isSelected = code == selectedCountryCode
+                        val flag = Constants.COUNTRY_FLAGS[code] ?: "🏳️"
+                        val countryName = Constants.SUPPORTED_COUNTRIES[code] ?: code.uppercase()
+                        
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(if (isSelected) MobilePrimary else MobileSurfaceFocused)
+                                .clickable { onCountrySelected(code) }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
                             Text(
-                                text = "${cat.icon} ${cat.name}",
-                                color = if (isSelected) MobilePrimary else Color.LightGray,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 13.sp
+                                text = "$flag $countryName",
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                             )
                         }
-                    }
-                )
-            }
-        }
-
-        // Submenú horizontal si la pestaña es "Países"
-        AnimatedVisibility(visible = selectedFilterId == "countries") {
-            val countryCodes = Constants.SPANISH_COUNTRIES.toList().sorted()
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MobileSurface.copy(alpha = 0.4f))
-                    .padding(vertical = 8.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(countryCodes) { code ->
-                    val isSelected = code == selectedCountryCode
-                    val flag = Constants.COUNTRY_FLAGS[code] ?: "🏳️"
-                    val countryName = Constants.SUPPORTED_COUNTRIES[code] ?: code.uppercase()
-                    
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(if (isSelected) MobilePrimary else MobileSurfaceFocused)
-                            .clickable { onCountrySelected(code) }
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = "$flag $countryName",
-                            color = Color.White,
-                            fontSize = 12.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                        )
                     }
                 }
             }

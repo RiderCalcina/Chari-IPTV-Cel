@@ -34,6 +34,7 @@ class TvViewModel @Inject constructor(
 
     private var hasUserManuallySelectedCountry = false
     private var activeLoadJob: Job? = null
+    private var searchJob: Job? = null
 
     init {
         val savedFilter = prefs.getString("last_filter_id", "fav") ?: "fav"
@@ -104,13 +105,38 @@ class TvViewModel @Inject constructor(
         }
     }
 
+    fun setSearchActive(active: Boolean) {
+        searchJob?.cancel()
+        _uiState.update {
+            it.copy(
+                isSearchActive = active,
+                searchQuery = if (!active) "" else it.searchQuery,
+                searchResults = if (!active) emptyList() else it.searchResults,
+                isSearching = false
+            )
+        }
+    }
+
     fun setSearchQuery(query: String) {
+        val trimmed = query.trim()
         _uiState.update { it.copy(searchQuery = query) }
+        searchJob?.cancel()
+        if (trimmed.isEmpty()) {
+            _uiState.update { it.copy(searchResults = emptyList(), isSearching = false) }
+            return
+        }
+        searchJob = viewModelScope.launch {
+            _uiState.update { it.copy(isSearching = true) }
+            delay(200)
+            val results = repository.searchChannelsGlobally(trimmed)
+            _uiState.update { it.copy(searchResults = results, isSearching = false) }
+        }
     }
 
     fun selectFilter(filterId: String, forceRefresh: Boolean = false) {
+        searchJob?.cancel()
         prefs.edit().putString("last_filter_id", filterId).apply()
-        if (!forceRefresh && _uiState.value.selectedFilterId == filterId && _uiState.value.channels.isNotEmpty()) {
+        if (!forceRefresh && _uiState.value.selectedFilterId == filterId && _uiState.value.channels.isNotEmpty() && !_uiState.value.isSearchActive) {
             return
         }
 
@@ -119,6 +145,9 @@ class TvViewModel @Inject constructor(
                 it.copy(
                     selectedFilterId = "countries",
                     isCountrySubMenuVisible = true,
+                    isSearchActive = false,
+                    searchQuery = "",
+                    searchResults = emptyList(),
                     channels = emptyList(),
                     isLoading = true,
                     errorMessage = null
@@ -132,6 +161,9 @@ class TvViewModel @Inject constructor(
             it.copy(
                 selectedFilterId = filterId,
                 isCountrySubMenuVisible = false,
+                isSearchActive = false,
+                searchQuery = "",
+                searchResults = emptyList(),
                 channels = emptyList(),
                 isLoading = true,
                 errorMessage = null
@@ -141,9 +173,10 @@ class TvViewModel @Inject constructor(
     }
 
     fun selectCountry(countryCode: String, forceRefresh: Boolean = false) {
+        searchJob?.cancel()
         hasUserManuallySelectedCountry = true
         prefs.edit().putString("last_filter_id", "countries").putString("last_country_code", countryCode).apply()
-        if (!forceRefresh && _uiState.value.selectedCountryCode == countryCode && _uiState.value.selectedFilterId == "countries" && _uiState.value.channels.isNotEmpty()) {
+        if (!forceRefresh && _uiState.value.selectedCountryCode == countryCode && _uiState.value.selectedFilterId == "countries" && _uiState.value.channels.isNotEmpty() && !_uiState.value.isSearchActive) {
             return
         }
         _uiState.update { 
@@ -151,6 +184,9 @@ class TvViewModel @Inject constructor(
                 selectedFilterId = "countries",
                 selectedCountryCode = countryCode,
                 isCountrySubMenuVisible = true,
+                isSearchActive = false,
+                searchQuery = "",
+                searchResults = emptyList(),
                 channels = emptyList(),
                 isLoading = true,
                 errorMessage = null
