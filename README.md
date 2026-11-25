@@ -43,16 +43,26 @@ El reproductor nativo integra controles táctiles intuitivos que evitan tener qu
 * Identificación con **estrella dorada (`⭐`)** al estilo de la versión de televisión.
 * Mantén presionado cualquier canal o película para añadirlo o quitarlo de tus favoritos al instante.
 
-### 6. 📺 Google Cast & Picture-in-Picture (PiP)
-* **Chromecast Integrado:** Transmite cualquier canal o película a tu Smart TV con un solo toque desde el botón de transmisión.
+### 6. 🎮 Control Remoto Virtual LAN & Ecosistema Chari-IPTV
+Convierte tu celular en un mando a distancia interactivo y centro de control para tu Smart TV cuando ambos dispositivos están en la misma red Wi-Fi:
+* **Descubrimiento Automático mDNS:** Detecta la televisión al instante mediante DNS-SD (`_chari-tv._tcp.`) sin necesidad de configurar direcciones IP manualmente.
+* **Insignia de Conexión en Tiempo Real:** El icono de TV (`📺`) en la barra superior muestra un punto verde luminoso cuando una televisión con Chari-IPTV está activa y lista para recibir comandos.
+* **"Enviar a TV" con un Toque:** Cada tarjeta de canal o película (incluido Studio Ghibli) y la barra superior del reproductor incorporan un botón de TV directo para mandar la señal a la pantalla grande sin abrirla en el celular.
+* **Cruceta Táctil D-Pad:** Mando circular ergonómico con respuesta háptica suave, botones de navegación (**Atrás, Inicio, Play/Pausa, Silenciar**), control de volumen de la tele (**Vol - / Vol +**).
+* **Teclado Remoto (Escribir en TV):** Redacta búsquedas directamente desde el teclado táctil de tu móvil para no tener que teclear letra por letra con el mando físico de la tele.
+* **Sincronización de Favoritos:** Sincroniza en un solo clic la lista completa de tus canales favoritos hacia la base de datos de la televisión.
+
+### 7. 📺 Google Cast Universal (Chromecast) & Picture-in-Picture (PiP)
+* **Coexistencia con Chromecast:** Si tu televisor no tiene instalada la app de TV o usas un Chromecast clásico, el botón oficial de Google Cast sigue disponible para transmitir a cualquier pantalla compatible mediante el receptor web y el proxy local seguro.
 * **Modo PiP:** Continúa escuchando o viendo la transmisión en una ventana flotante mientras usas WhatsApp, navegas en internet o revisas otras aplicaciones.
 
-### 7. ⚡ Arquitectura de Alto Rendimiento
+### 8. ⚡ Arquitectura de Alto Rendimiento
 * **Multi-Proveedor Asíncrono:** Conexión modular con `IptvOrgProvider` (enfoque en transmisiones hispanohablantes), `TdtChannelsProvider`, `PlutoTvProvider` y `AniVodProvider`. Cero bloqueos en el hilo principal.
 * **Room Database v13:** Caché persistente local con vigencia inteligente de 4 horas (TTL).
 * **Dual OkHttp + DoH:** Resolución DNS sobre HTTPS (Cloudflare + Google DNS) inmune a bloqueos por proveedores de internet.
 * **Decodificador Jellyfin FFmpeg:** Soporte para transmisiones con pistas de audio complejas o códecs de TV digital.
 * **Proxy Local Anti-SSRF:** Servidor interno en loopback (puerto 8899) para inyección de cabeceras seguras y recuperación ante caídas de señal.
+* **Cliente LAN HTTP Asíncrono:** Envío de órdenes REST (`POST /api/command` y `/api/remote`) en menos de 50 ms a la televisión.
 
 ---
 
@@ -111,6 +121,13 @@ cd Chary-IPTV
 ```text
 app/build/outputs/apk/release/Chari-IPTV_Cel_1.2.apk
 ```
+
+---
+
+## 📖 Documentación y Guías
+
+* 📘 **[Guía de Ayuda Completa y Manual de Usuario](file:///C:/xampp/htdocs/Chari-IPTV_Cel/GUIA_AYUDA_USUARIO.md):** Manual detallado paso a paso sobre cómo usar la aplicación móvil, cómo utilizar el control remoto virtual, cómo transmitir por Google Cast tradicional, cómo sincronizar favoritos y cómo resolver problemas de red local.
+* 📡 **[Plan de Arquitectura LAN](file:///C:/xampp/htdocs/Chari-IPTV_Cel/PLAN_IMPLEMENTACION_CONTROL_REMOTO_LAN.md):** Especificación técnica del protocolo de comunicación P2P entre celular y TV.
 
 ---
 
