@@ -11,7 +11,7 @@ android {
     namespace = "com.example.chariiptv"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.qwertyaserty.chariiptv"
+        applicationId = "com.qwertyaserty.chariiptvcel"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

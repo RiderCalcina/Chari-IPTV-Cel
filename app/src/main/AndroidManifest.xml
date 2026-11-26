@@ -14,7 +14,6 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:windowSoftInputMode="adjustResize"
         android:theme="@style/Theme.TVDROID">
         
         <meta-data
@@ -26,6 +25,7 @@
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize"
             android:supportsPictureInPicture="true"
             android:resizeableActivity="true"
+            android:windowSoftInputMode="adjustResize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

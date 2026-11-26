@@ -178,10 +178,22 @@ class LocalHlsProxyServer @Inject constructor(
         return proxyUrl
     }
 
+    private fun isLocalClientAddress(socket: Socket): Boolean {
+        val addr = socket.inetAddress ?: return false
+        if (addr.isLoopbackAddress || addr.isSiteLocalAddress || addr.isLinkLocalAddress) return true
+        val host = addr.hostAddress ?: ""
+        val cleanHost = if (host.startsWith("::ffff:")) host.removePrefix("::ffff:") else host
+        return cleanHost.matches(PRIVATE_IP_REGEX)
+    }
+
     private fun handleConnection(socket: Socket) {
         try {
             socket.use { s ->
                 s.soTimeout = 15000
+                if (!isLocalClientAddress(s)) {
+                    sendForbidden(s)
+                    return
+                }
                 val reader = BufferedReader(InputStreamReader(s.getInputStream()))
                 val requestLine = reader.readLine() ?: return
                 val parts = requestLine.split(" ")

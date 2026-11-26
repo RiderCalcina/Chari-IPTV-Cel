@@ -1,4 +1,4 @@
-# Reglas ProGuard / R8 para Chari-IPTV_TV (Compose TV + Media3 + FFmpeg + Hilt + Room + OkHttp)
+# Reglas ProGuard / R8 para Chari-IPTV_Cel (Compose + Media3 + FFmpeg + Hilt + Room + OkHttp + Cast)
 
 # Media3 / ExoPlayer y extensiones cargadas por reflexión (Jellyfin FFmpeg Decoder)
 -keep class androidx.media3.decoder.ffmpeg.** { *; }
@@ -35,8 +35,8 @@
 # Inyección Dagger / Hilt y Calificadores
 -keep class com.example.chariiptv.di.** { *; }
 
-# Android TV Provider / BroadcastReceiver
--keep class com.example.chariiptv.tvrecommendations.** { *; }
+# Google Cast OptionsProvider
+-keep class com.example.chariiptv.cast.** { *; }
 
 # Optimización de rendimiento para producción: eliminar logs de depuración (Log.v / Log.d)
 -assumenosideeffects class android.util.Log {
