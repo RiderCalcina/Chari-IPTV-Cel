@@ -69,6 +69,11 @@ class TvViewModel @Inject constructor(
             }
         }
 
+        // Purgar proactivamente cualquier residuo de canal de prueba en base de datos local
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.purgeTestFavorites()
+        }
+
         // Flujo reactivo de favoritos
         viewModelScope.launch {
             repository.getFavoriteChannelsFlow().collect { favChannels ->

@@ -49,14 +49,22 @@ class ChannelRepository @Inject constructor(
 
     private val channelsCache = ConcurrentHashMap<String, CachedEntry>()
 
-    fun getFavoritesFlow(): Flow<List<String>> = favoriteDao.getFavorites()
+    fun getFavoritesFlow(): Flow<List<String>> =
+        favoriteDao.getFavoriteChannelsFlow().map { favEntities ->
+            favEntities
+                .filter { !Constants.isTestOrDummyChannel(it.name, it.url) }
+                .map { it.url }
+        }
 
     fun getFavoriteChannelsFlow(): Flow<List<Channel>> =
         favoriteDao.getFavoriteChannelsFlow().map { favEntities ->
-            favEntities.map { it.toDomainChannel() }
+            favEntities
+                .filter { !Constants.isTestOrDummyChannel(it.name, it.url) }
+                .map { it.toDomainChannel() }
         }
 
     suspend fun toggleFavorite(channel: Channel) {
+        if (Constants.isTestOrDummyChannel(channel.name, channel.url)) return
         val isFav = favoriteDao.isFavorite(channel.url)
         if (isFav) {
             favoriteDao.deleteFavorite(channel.url)
@@ -74,15 +82,31 @@ class ChannelRepository @Inject constructor(
         }
     }
 
+    suspend fun purgeTestFavorites() = withContext(Dispatchers.IO) {
+        try {
+            val allFavs = favoriteDao.getFavoriteChannels()
+            for (fav in allFavs) {
+                if (Constants.isTestOrDummyChannel(fav.name, fav.url)) {
+                    favoriteDao.deleteFavorite(fav.url)
+                }
+            }
+        } catch (_: Exception) {}
+    }
+
     suspend fun getFavoriteChannels(): List<Channel> = withContext(Dispatchers.IO) {
         val favEntities = favoriteDao.getFavoriteChannels()
         if (favEntities.isEmpty()) return@withContext emptyList()
-        return@withContext favEntities.map { it.toDomainChannel() }
+        return@withContext favEntities
+            .filter { !Constants.isTestOrDummyChannel(it.name, it.url) }
+            .map { it.toDomainChannel() }
     }
 
     suspend fun syncFavorites(favorites: List<FavoriteChannel>) = withContext(Dispatchers.IO) {
+        purgeTestFavorites()
         for (fav in favorites) {
-            favoriteDao.insertFavorite(fav)
+            if (!Constants.isTestOrDummyChannel(fav.name, fav.url)) {
+                favoriteDao.insertFavorite(fav)
+            }
         }
     }
 

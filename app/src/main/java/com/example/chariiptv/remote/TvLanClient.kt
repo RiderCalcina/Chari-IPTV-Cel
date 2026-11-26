@@ -196,7 +196,7 @@ class TvLanClient @Inject constructor() {
     suspend fun syncFavorites(tv: DiscoveredTv, phoneFavorites: List<Channel>): Result<List<FavoriteChannel>> = withContext(Dispatchers.IO) {
         try {
             val jsonArray = JSONArray()
-            phoneFavorites.forEach { ch ->
+            phoneFavorites.filter { !com.example.chariiptv.util.Constants.isTestOrDummyChannel(it.name, it.url) }.forEach { ch ->
                 jsonArray.put(JSONObject().apply {
                     put("url", ch.url)
                     put("name", ch.name)
@@ -226,11 +226,12 @@ class TvLanClient @Inject constructor() {
                         val item = favsArray.optJSONObject(i)
                         if (item != null) {
                             val url = item.optString("url", "")
-                            if (url.isNotBlank()) {
+                            val name = item.optString("name", "")
+                            if (url.isNotBlank() && !com.example.chariiptv.util.Constants.isTestOrDummyChannel(name, url)) {
                                 mergedList.add(
                                     FavoriteChannel(
                                         url = url,
-                                        name = item.optString("name", ""),
+                                        name = name,
                                         logo = item.optString("logo", ""),
                                         referer = item.optString("referer", ""),
                                         userAgent = item.optString("userAgent", ""),
