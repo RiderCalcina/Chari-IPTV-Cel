@@ -4,11 +4,20 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9.0%2B-blue.svg)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-purple.svg)](https://developer.android.com/jetpack/compose)
 [![Version](https://img.shields.io/badge/Versi%C3%B3n-1.2-brightgreen.svg)]()
+[![TV Companion](https://img.shields.io/badge/Ecosistema-Smart%20TV%20Companion-blue.svg)](https://github.com/RiderCalcina/Chari-IPTV-TV)
 [![License](https://img.shields.io/badge/Licencia-Libre%20Acceso-orange.svg)]()
 
-**Chari-IPTV Cel** es la edición de alto rendimiento diseñada específicamente para teléfonos inteligentes y tabletas Android del ecosistema [Chari-IPTV](https://github.com/RiderCalcina/Chari-IPTV).
+**Chari-IPTV Cel** es la edición de alto rendimiento diseñada específicamente para teléfonos inteligentes y tabletas Android del ecosistema [Chari-IPTV TV (Smart TV)](https://github.com/RiderCalcina/Chari-IPTV-TV).
 
-Esta aplicación te permite sintonizar canales de televisión abierta en español de todo el mundo y disfrutar de la filmografía completa de Studio Ghibli, combinando una interfaz táctil moderna (Material 3) con un motor de reproducción multimedia de nivel profesional.
+Esta aplicación te permite sintonizar canales de televisión abierta en español de todo el mundo y disfrutar de la filmografía completa de Studio Ghibli, combinando una interfaz táctil moderna (Material 3) con un motor de reproducción multimedia de nivel profesional y conectividad inalámbrica bidireccional con tu televisor.
+
+---
+
+<p align="center">
+  <img src="capt/i01.png" width="45%" alt="Interfaz Móvil Chari-IPTV Cel" />
+  &nbsp;&nbsp;
+  <img src="capt/i02.png" width="45%" alt="Control Remoto Virtual LAN" />
+</p>
 
 ---
 
@@ -46,12 +55,12 @@ El reproductor nativo integra controles táctiles intuitivos que evitan tener qu
 ### 6. 🎮 Control Remoto Virtual LAN & Ecosistema Chari-IPTV
 Convierte tu celular en un mando a distancia interactivo y centro de control para tu Smart TV cuando ambos dispositivos están en la misma red Wi-Fi:
 * **Descubrimiento Automático mDNS:** Detecta la televisión al instante mediante DNS-SD (`_chari-tv._tcp.`) sin necesidad de configurar direcciones IP manualmente.
-* **Insignia de Conexión en Tiempo Real:** El icono de TV (`📺`) en la barra superior muestra un punto verde luminoso cuando una televisión con Chari-IPTV está activa y lista para recibir comandos.
-* **"Enviar a TV" con un Toque:** Cada tarjeta de canal o película (incluido Studio Ghibli) y la barra superior del reproductor incorporan un botón de TV directo para mandar la señal a la pantalla grande sin abrirla en el celular.
-* **Cruceta Táctil D-Pad:** Mando circular ergonómico con respuesta háptica suave, botones de navegación (**Atrás, Inicio, Play/Pausa, Silenciar**), control de volumen de la tele (**Vol - / Vol +**).
+* **Insignia de Conexión en Tiempo Real:** El icono de TV (`📺`) en la barra superior muestra un punto verde luminoso cuando una televisión con [Chari-IPTV TV](https://github.com/RiderCalcina/Chari-IPTV-TV) está activa y lista para recibir comandos.
+* **"Enviar a TV" con Detención Automática:** Cada tarjeta de canal o película (incluido Studio Ghibli) y la barra superior del reproductor incorporan un botón de TV directo. Al presionar "Enviar a TV", la señal se transfiere al televisor y **el reproductor y audio local del celular se detienen automáticamente**, permitiendo que la Smart TV reproduzca el stream directamente vía su propio ExoPlayer sin gastar batería ni duplicar audio en el móvil.
+* **Cruceta Táctil D-Pad:** Mando circular ergonómico con respuesta háptica suave, botones de navegación (**Atrás, Inicio, Play/Pausa, Silenciar**) y control de volumen de la tele (**Vol - / Vol +**).
 * **Búsqueda Remota (Buscar en TV):** Redacta búsquedas directamente desde el teclado táctil de tu móvil para sintonizar canales en la tele sin tener que teclear letra por letra con el mando físico.
-* **Sincronización de Favoritos:** Sincroniza en un solo clic la lista completa de tus canales favoritos hacia la base de datos de la televisión.
-* **Búsqueda Global Instantánea:** Motor de búsqueda general en toda la app con apertura automática del teclado y visualización completa del texto sin recortes.
+* **Sincronización Bidireccional de Favoritos:** El botón **"Sincronizar Favoritos"** combina y sincroniza las listas de canales preferidos de ambos dispositivos, garantizando que tanto en el celular como en el televisor tengas exactamente la misma selección.
+* **Búsqueda Global Instantánea:** Motor de búsqueda general en toda la app (todas las categorías, países hispanohablantes, favoritos y Studio Ghibli) con apertura automática del teclado y visualización completa del texto sin recortes.
 
 ### 7. 📺 Google Cast Universal (Chromecast) & Picture-in-Picture (PiP)
 * **Coexistencia con Chromecast:** Si tu televisor no tiene instalada la app de TV o usas un Chromecast clásico, el botón oficial de Google Cast sigue disponible para transmitir a cualquier pantalla compatible mediante el receptor web y el proxy local seguro.
@@ -109,8 +118,8 @@ Las pestañas superiores se encuentran organizadas en el siguiente orden:
 
 1. Clonar el repositorio:
 ```bash
-git clone https://github.com/RiderCalcina/Chary-IPTV.git
-cd Chary-IPTV
+git clone https://github.com/RiderCalcina/Chari-IPTV-Cel.git
+cd Chari-IPTV-Cel
 ```
 
 2. Compilar el APK Release optimizado:
@@ -127,8 +136,8 @@ app/build/outputs/apk/release/Chari-IPTV_Cel_1.2.apk
 
 ## 📖 Documentación y Guías
 
-* 📘 **[Guía de Ayuda Completa y Manual de Usuario](file:///C:/xampp/htdocs/Chari-IPTV_Cel/GUIA_AYUDA_USUARIO.md):** Manual detallado paso a paso sobre cómo usar la aplicación móvil, cómo utilizar el control remoto virtual, cómo transmitir por Google Cast tradicional, cómo sincronizar favoritos y cómo resolver problemas de red local.
-* 📺 **[Repositorio Chari-IPTV Smart TV](https://github.com/RiderCalcina/Chari-IPTV):** Código fuente, arquitectura del servidor micro-HTTP y guía de la versión para televisores.
+* 📘 **[Guía de Ayuda Completa y Manual de Usuario](GUIA_AYUDA_USUARIO.md):** Manual detallado paso a paso sobre cómo usar la aplicación móvil, cómo utilizar el control remoto virtual, cómo transmitir por Google Cast tradicional, cómo sincronizar favoritos y cómo resolver problemas de red local.
+* 📺 **[Repositorio Chari-IPTV TV (Smart TV)](https://github.com/RiderCalcina/Chari-IPTV-TV):** Código fuente, arquitectura del servidor micro-HTTP y guía de la versión complementaria para televisores Android TV.
 
 ---
 
