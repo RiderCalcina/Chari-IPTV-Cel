@@ -59,7 +59,7 @@ fun ImportantModalDialog(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "¡Muchas gracias por su apoyo! Esta app es 100% gratuita y de libre acceso.",
+                    text = "¡Muchas gracias por sus donaciones! Esta app es 100% gratuita y de libre acceso.",
                     color = Color(0xFF94A3B8),
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center
@@ -76,33 +76,33 @@ fun ImportantModalDialog(
             ) {
                 // Tarjeta 1: Donaciones PayPal (Vertical con QR y leyenda debajo)
                 QrDonationCard(
-                    title = "💳 PayPal (Internacional)",
-                    subtitle = "Tarjetas de crédito, débito o saldo PayPal",
+                    title = "💳 PayPal",
+                    subtitle = "Internacional",
                     qrDrawableId = R.drawable.qr_paypal,
                     qrDescription = "PayPal QR",
-                    legend = "Escanea con tu cámara móvil o app de PayPal para donaciones voluntarias internacionales que ayudan al mantenimiento de los servidores.",
+                    legend = "Donación voluntaria con tarjeta o saldo PayPal.",
                     linkText = "paypal.com",
                     accentColor = Color(0xFF38BDF8)
                 )
 
                 // Tarjeta 2: Donaciones Yape (Vertical con QR y leyenda debajo)
                 QrDonationCard(
-                    title = "📱 Yape (Perú / BCP)",
-                    subtitle = "Transferencias rápidas en moneda local",
+                    title = "📱 Yape",
+                    subtitle = "Perú / BCP",
                     qrDrawableId = R.drawable.qr_yape,
                     qrDescription = "Yape QR",
-                    legend = "Escanea directamente desde la app de Yape en tu teléfono para donar de forma segura en Perú.",
+                    legend = "Escanea directamente desde la app Yape.",
                     linkText = "Yape (Perú)",
                     accentColor = Color(0xFFC084FC)
                 )
 
                 // Tarjeta 3: Web Oficial del Desarrollador (Vertical con QR y leyenda debajo)
                 QrDonationCard(
-                    title = "🌐 Sitio Web Oficial",
-                    subtitle = "Actualizaciones, novedades y soporte",
+                    title = "🌐 Web Oficial",
+                    subtitle = "Desarrollador",
                     qrDrawableId = R.drawable.qr_web,
                     qrDescription = "Web QR",
-                    legend = "Escanea para visitar nuestro sitio web oficial, descargar la versión más reciente para Android TV y Móvil, o contactar al autor.",
+                    legend = "Novedades, reportes y contacto directo.",
                     linkText = "www.qwertyaserty.com",
                     accentColor = Color(0xFF34D399)
                 )
@@ -118,16 +118,17 @@ fun ImportantModalDialog(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            text = "⚖️ Aviso Legal y Exención de Responsabilidad:",
+                            text = "⚖️ Aviso Legal, Propiedad Intelectual y Exención de Responsabilidad:",
                             color = MobilePrimary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "• Chari-IPTV es un reproductor multimedia cliente. No aloja, gestiona ni retransmite señales en servidores propios.\n" +
-                                   "• Las transmisiones en directo provienen de repositorios públicos abiertos en internet (iptv-org, TDTChannels).\n" +
-                                   "• El catálogo de Studio Ghibli indexa enlaces externos de preservación cultural pública alojados en Internet Archive (archive.org).\n" +
-                                   "• Todos los derechos de marca y material audiovisual pertenecen a sus respectivos autores y cadenas televisivas.",
+                            text = "• Naturaleza del Software: Chari-IPTV es un reproductor multimedia cliente de libre acceso. No almacena, gestiona, transmite ni retransmite señales o contenidos en servidores propios.\n" +
+                                   "• Señales en Vivo (IPTV): Los enlaces provienen íntegramente de repositorios e índices públicos abiertos en internet (iptv-org, TDTChannels). El desarrollador no controla la estabilidad ni emisión de las señales.\n" +
+                                   "• Catálogo Ghibli: El apartado VOD indexa enlaces de preservación cultural pública alojados externamente en Internet Archive (archive.org). Ningún archivo de video reside en la app.\n" +
+                                   "• Derechos de Autor y Marcas: Todas las marcas, logotipos, nombres y producciones pertenecen a Studio Ghibli Inc. (Hayao Miyazaki, Isao Takahata) y a sus respectivas cadenas televisivas.\n" +
+                                   "• Disponibilidad: El autor no se responsabiliza por restricciones geográficas, servidores fuera de línea o cambios en enlaces de terceros.",
                             color = Color(0xFF94A3B8),
                             fontSize = 10.sp,
                             lineHeight = 13.sp,
